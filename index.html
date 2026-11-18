@@ -4,17 +4,18 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <title>Engineering Calculator RK</title>
 
 <style>
 body {
     font-family: Arial, sans-serif;
     background: #f1f4f8;
-    padding: 30px;
+    padding: 25px;
 }
 
 .container {
-    max-width: 500px;
+    max-width: 520px;
     margin: auto;
     background: white;
     padding: 25px;
@@ -23,12 +24,12 @@ body {
 
 h1 {
     color: #245b45;
-    font-size: 24px;
 }
 
 label {
     display: block;
     margin-top: 15px;
+    font-weight: bold;
 }
 
 input {
@@ -53,10 +54,15 @@ button {
 
 .result {
     margin-top: 20px;
-    padding: 15px;
+    padding: 18px;
     background: #e8f3ed;
     border-radius: 8px;
-    font-size: 20px;
+    line-height: 1.9;
+}
+
+.total {
+    color: #176b3a;
+    font-size: 24px;
     font-weight: bold;
 }
 </style>
@@ -67,6 +73,7 @@ button {
 <div class="container">
 
 <h1>Engineering Calculator RK</h1>
+
 <p>Расчёт объёма бетона фундаментной плиты</p>
 
 <label>Длина плиты, м</label>
@@ -78,42 +85,65 @@ button {
 <label>Толщина плиты, м</label>
 <input type="number" id="height" value="0.8" step="any">
 
-<button onclick="calculate()">Рассчитать объём</button>
+<label>Запас бетона, %</label>
+<input type="number" id="reserve" value="5" min="0" max="100" step="any">
+
+<button onclick="calculate()">Рассчитать</button>
 
 <div class="result" id="result">
-Объём: — м³
+Введите исходные данные и нажмите «Рассчитать».
 </div>
 
 </div>
 
 <script>
+
 function calculate() {
 
     const L = document.getElementById("length").value;
     const B = document.getElementById("width").value;
     const H = document.getElementById("height").value;
+    const P = document.getElementById("reserve").value;
 
     const length = Number(L);
     const width = Number(B);
     const height = Number(H);
+    const reserve = Number(P);
 
-    if (!L || !B || !H ||
+    const result = document.getElementById("result");
+
+    if (!L || !B || !H || P === "" ||
         !Number.isFinite(length) ||
         !Number.isFinite(width) ||
         !Number.isFinite(height) ||
-        length <= 0 || width <= 0 || height <= 0) {
+        !Number.isFinite(reserve) ||
+        length <= 0 || width <= 0 ||
+        height <= 0 || reserve < 0 ||
+        reserve > 100) {
 
-        document.getElementById("result").innerText =
-        "Введите корректные размеры!";
+        result.innerText =
+        "Ошибка! Проверьте исходные данные.";
 
         return;
     }
 
-    const volume = length * width * height;
+    const area = length * width;
 
-    document.getElementById("result").innerText =
-    "Объём: " + volume.toFixed(2) + " м³";
+    const volume = area * height;
+
+    const additional = volume * reserve / 100;
+
+    const total = volume + additional;
+
+    result.innerHTML =
+    "Площадь плиты: " + area.toFixed(2) + " м²<br>" +
+    "Объём бетона: " + volume.toFixed(2) + " м³<br>" +
+    "Дополнительный объём: " + additional.toFixed(2) + " м³<br>" +
+    "Общий объём с запасом:<br>" +
+    "<span class='total'>" + total.toFixed(2) + " м³</span>";
+
 }
+
 </script>
 
 </body>

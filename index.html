@@ -1,0 +1,120 @@
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Engineering Calculator RK</title>
+
+<style>
+body {
+    font-family: Arial, sans-serif;
+    background: #f1f4f8;
+    padding: 30px;
+}
+
+.container {
+    max-width: 500px;
+    margin: auto;
+    background: white;
+    padding: 25px;
+    border-radius: 12px;
+}
+
+h1 {
+    color: #245b45;
+    font-size: 24px;
+}
+
+label {
+    display: block;
+    margin-top: 15px;
+}
+
+input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 12px;
+    margin-top: 6px;
+    font-size: 16px;
+}
+
+button {
+    width: 100%;
+    padding: 14px;
+    margin-top: 22px;
+    background: #245b45;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+.result {
+    margin-top: 20px;
+    padding: 15px;
+    background: #e8f3ed;
+    border-radius: 8px;
+    font-size: 20px;
+    font-weight: bold;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>Engineering Calculator RK</h1>
+<p>Расчёт объёма бетона фундаментной плиты</p>
+
+<label>Длина плиты, м</label>
+<input type="number" id="length" value="44.37" step="any">
+
+<label>Ширина плиты, м</label>
+<input type="number" id="width" value="20.04" step="any">
+
+<label>Толщина плиты, м</label>
+<input type="number" id="height" value="0.8" step="any">
+
+<button onclick="calculate()">Рассчитать объём</button>
+
+<div class="result" id="result">
+Объём: — м³
+</div>
+
+</div>
+
+<script>
+function calculate() {
+
+    const L = document.getElementById("length").value;
+    const B = document.getElementById("width").value;
+    const H = document.getElementById("height").value;
+
+    const length = Number(L);
+    const width = Number(B);
+    const height = Number(H);
+
+    if (!L || !B || !H ||
+        !Number.isFinite(length) ||
+        !Number.isFinite(width) ||
+        !Number.isFinite(height) ||
+        length <= 0 || width <= 0 || height <= 0) {
+
+        document.getElementById("result").innerText =
+        "Введите корректные размеры!";
+
+        return;
+    }
+
+    const volume = length * width * height;
+
+    document.getElementById("result").innerText =
+    "Объём: " + volume.toFixed(2) + " м³";
+}
+</script>
+
+</body>
+</html>

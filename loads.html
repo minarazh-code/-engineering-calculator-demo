@@ -182,16 +182,28 @@ th { background: #f8fafc; color: #475569; }
 </main>
 
 <script>
+
 const loads = [];
 
 const $ = id => document.getElementById(id);
 const number = value => Number(value).toFixed(2);
 
+function escapeHTML(value) {
+  return String(value).replace(/[&<>"']/g, char => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;"
+  })[char]);
+}
+
 function render() {
   const table = $("loadTable");
 
   if (loads.length === 0) {
-    table.innerHTML = '<tr><td colspan="6">Нагрузки пока не добавлены</td></tr>';
+    table.innerHTML =
+      '<tr><td colspan="6">Нагрузки пока не добавлены</td></tr>';
   } else {
     table.innerHTML = loads.map((item, index) => `
       <tr>
@@ -200,10 +212,10 @@ function render() {
         <td>${number(item.value)}</td>
         <td>${number(item.gamma)}</td>
         <td>${number(item.value * item.gamma)}</td>
-       <td>
-  <button class="secondary" data-action="edit" data-index="${index}">Изменить</button>
-  <button class="delete" data-action="delete" data-index="${index}">Удалить</button>
-</td>
+        <td>
+          <button class="secondary" data-action="edit" data-index="${index}">Изменить</button>
+          <button class="delete" data-action="delete" data-index="${index}">Удалить</button>
+        </td>
       </tr>
     `).join("");
   }
@@ -221,17 +233,9 @@ function render() {
   $("grandTotal").textContent = number(permanent + variable);
 
   const area = Number($("area").value);
-  $("areaResult").textContent =
-    area > 0
-      ? `Заданная площадь: ${number(area)} м².`
-      : "Площадь не задана.";
-}
-
-function escapeHTML(value) {
-  return String(value).replace(/[&<>"']/g, char => ({
-    "&": "&amp;", "<": "&lt;", ">": "&gt;",
-    '"': "&quot;", "'": "&#39;"
-  })[char]);
+  $("areaResult").textContent = area > 0
+    ? `Заданная площадь: ${number(area)} м².`
+    : "Площадь не задана.";
 }
 
 $("addButton").addEventListener("click", () => {
@@ -239,17 +243,22 @@ $("addButton").addEventListener("click", () => {
   const value = $("loadValue").value;
   const gamma = $("gamma").value;
 
-  if (!name || value === "" || gamma === "" ||
-      !Number.isFinite(Number(value)) ||
-      !Number.isFinite(Number(gamma)) ||
-      Number(value) < 0 || Number(gamma) <= 0) {
+  if (
+    !name ||
+    value === "" ||
+    gamma === "" ||
+    !Number.isFinite(Number(value)) ||
+    !Number.isFinite(Number(gamma)) ||
+    Number(value) < 0 ||
+    Number(gamma) <= 0
+  ) {
     $("status").textContent =
       "Заполните название, нагрузку и коэффициент. Нагрузка должна быть неотрицательной, коэффициент — больше нуля.";
     return;
   }
 
   loads.push({
-    name,
+    name: name,
     type: $("loadType").value,
     value: Number(value),
     gamma: Number(gamma)
@@ -258,31 +267,36 @@ $("addButton").addEventListener("click", () => {
   $("loadName").value = "";
   $("loadValue").value = "";
   $("gamma").value = "";
+
   $("status").textContent = "Нагрузка добавлена.";
   render();
 });
 
-const index = Number(button.dataset.index);
-  const action = button.dataset.action;
+$("loadTable").addEventListener("click", event => {
+  const button = event.target.closest("button[data-action]");
+  if (!button) return;
+
+  const index = Number(button.dataset.index);
   const item = loads[index];
 
   if (!item) return;
 
-  if (action === "edit") {
+  if (button.dataset.action === "edit") {
     $("loadName").value = item.name;
     $("loadType").value = item.type;
     $("loadValue").value = item.value;
     $("gamma").value = item.gamma;
 
     loads.splice(index, 1);
-    $("status").textContent =
-      "Измените данные в полях выше и нажмите «Добавить нагрузку».";
-    render();
 
+    $("status").textContent =
+      "Исправьте данные и нажмите «Добавить нагрузку».";
+
+    render();
     $("loadName").focus();
   }
 
-  if (action === "delete") {
+  if (button.dataset.action === "delete") {
     loads.splice(index, 1);
     $("status").textContent = "Строка удалена.";
     render();
@@ -290,7 +304,9 @@ const index = Number(button.dataset.index);
 });
 
 $("area").addEventListener("input", render);
+
 render();
+
 </script>
 </body>
 </html>

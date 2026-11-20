@@ -262,13 +262,31 @@ $("addButton").addEventListener("click", () => {
   render();
 });
 
-$("loadTable").addEventListener("click", event => {
-  const button = event.target.closest("button[data-index]");
-  if (!button) return;
+const index = Number(button.dataset.index);
+  const action = button.dataset.action;
+  const item = loads[index];
 
-  loads.splice(Number(button.dataset.index), 1);
-  $("status").textContent = "Строка удалена.";
-  render();
+  if (!item) return;
+
+  if (action === "edit") {
+    $("loadName").value = item.name;
+    $("loadType").value = item.type;
+    $("loadValue").value = item.value;
+    $("gamma").value = item.gamma;
+
+    loads.splice(index, 1);
+    $("status").textContent =
+      "Измените данные в полях выше и нажмите «Добавить нагрузку».";
+    render();
+
+    $("loadName").focus();
+  }
+
+  if (action === "delete") {
+    loads.splice(index, 1);
+    $("status").textContent = "Строка удалена.";
+    render();
+  }
 });
 
 $("area").addEventListener("input", render);

@@ -1,1 +1,365 @@
 
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Masonry — калькулятор кладки и стен</title>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
+:root{--bg:#f3f5f8;--card:#fff;--text:#202938;--muted:#718096;--blue:#1769aa;--border:#e1e7ef;--green:#16845b;--red:#c0392b}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:Arial,sans-serif}
+header{background:#172b45;color:#fff;padding:22px 28px}
+.header{max-width:1450px;margin:auto}
+header h1{font-size:25px;margin:0 0 7px}
+header p{font-size:13px;color:#cbd5e1;margin:0}
+main{max-width:1450px;margin:24px auto;padding:0 18px 45px}
+.card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:18px;box-shadow:0 4px 18px rgba(20,35,55,.05)}
+h2{font-size:18px;margin:0 0 17px}
+h3{font-size:15px;margin:20px 0 12px}
+.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:13px}
+.field{display:flex;flex-direction:column;gap:6px}
+label{font-size:12px;color:var(--muted);font-weight:600}
+input,select{width:100%;min-width:0;padding:10px;border:1px solid #ccd5e0;border-radius:7px;font-size:14px;background:#fff;color:var(--text)}
+input:focus,select:focus{outline:2px solid #b9d8f4;border-color:var(--blue)}
+.actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:16px}
+button{border:0;border-radius:7px;padding:10px 15px;font-weight:600;font-size:13px;cursor:pointer}
+.primary{background:var(--blue);color:#fff}
+.secondary{background:#eaf0f6;color:#29445f}
+.danger{background:#fff0ee;color:var(--red)}
+.small{padding:6px 9px;font-size:12px}
+.metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.metric{background:#f6f9fc;border:1px solid var(--border);padding:15px;border-radius:9px}
+.metric span{font-size:12px;color:var(--muted);display:block;margin-bottom:8px}
+.metric strong{font-size:22px;display:block}
+.metric small{font-size:11px;color:var(--muted)}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;min-width:750px;font-size:13px}
+th,td{padding:10px 9px;border-bottom:1px solid var(--border);text-align:left;white-space:nowrap}
+th{background:#f5f7fa;color:#536276;font-size:11px;text-transform:uppercase}
+.num{text-align:right}
+.empty{text-align:center;color:var(--muted);padding:25px}
+.note{background:#f5f8fb;border-left:3px solid var(--blue);padding:11px 13px;font-size:12px;color:#526174;line-height:1.55;margin-top:12px}
+.badge{display:inline-block;padding:4px 7px;border-radius:5px;background:#eaf2fa;color:#245a88;font-size:11px}
+.layer-card{border:1px solid var(--border);border-radius:9px;padding:14px;margin:10px 0;background:#fbfcfe}
+.layer-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:10px}
+.layer-head strong{font-size:13px}
+.layer-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.hint,.footnote{font-size:12px;color:var(--muted);line-height:1.55}
+@media(max-width:900px){.grid,.layer-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.metrics{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:560px){.grid,.layer-grid,.metrics{grid-template-columns:1fr}main{padding:0 10px}.card{padding:15px}header{padding:18px}}
+@media print{body{background:#fff}header{background:#fff;color:#172b45;padding:8px 0}header p{color:#555}main{padding:0;margin:0}.card{box-shadow:none;break-inside:avoid;padding:10px;margin-bottom:8px}.no-print,button{display:none!important}.table-wrap{overflow:visible}table{min-width:0;font-size:9px}th,td{padding:5px}}
+</style>
+</head>
+<body>
+<header><div class="header">
+<h1>MASONRY — калькулятор кладки и стен</h1>
+<p>Расчёт многослойных стен · Кирпич · Блоки · Утеплитель · Нагрузка от стен</p>
+</div></header>
+
+<main>
+<section class="card">
+<h2>1. Данные проекта</h2>
+<div class="grid">
+<div class="field"><label>Наименование объекта</label><input id="projectName" placeholder="Жилой дом"></div>
+<div class="field"><label>Адрес объекта</label><input id="projectAddress" placeholder="Город, адрес"></div>
+<div class="field"><label>Шифр проекта</label><input id="projectCode" placeholder="25-АР"></div>
+<div class="field"><label>Стадия</label><select id="projectStage"><option>РП</option><option>П</option><option>ЭП</option></select></div>
+<div class="field"><label>Раздел</label><input id="projectSection" value="АР / КЖ"></div>
+<div class="field"><label>Лист</label><input id="projectSheet" placeholder="АР-1"></div>
+<div class="field"><label>Разработал</label><input id="projectAuthor"></div>
+<div class="field"><label>Дата</label><input id="projectDate" type="date"></div>
+</div>
+<div class="actions no-print">
+<button class="secondary" onclick="saveProject()">Сохранить проект</button>
+<button class="secondary" onclick="loadProject()">Загрузить проект</button>
+</div>
+</section>
+
+<section class="card">
+<h2>2. Геометрия стены</h2>
+<div class="grid">
+<div class="field"><label>Марка стены</label><input id="wallMark" placeholder="Например, НС-1"></div>
+<div class="field"><label>Оси / расположение</label><input id="wallAxes" placeholder="А-Б / 1-3"></div>
+<div class="field"><label>Длина стены, м</label><input id="wallLength" type="number" min="0" step="0.001" value="6"></div>
+<div class="field"><label>Высота стены, м</label><input id="wallHeight" type="number" min="0" step="0.001" value="3"></div>
+<div class="field"><label>Количество одинаковых стен, шт.</label><input id="wallQuantity" type="number" min="1" step="1" value="1"></div>
+<div class="field"><label>Суммарная площадь проёмов, м² (на одну стену)</label><input id="openings" type="number" min="0" step="0.01" value="0"></div>
+<div class="field"><label>Запас материалов, %</label><input id="waste" type="number" min="0" step="0.5" value="5"></div>
+<div class="field"><label>Коэффициент надёжности нагрузки γf</label><input id="gamma" type="number" min="0.1" step="0.01" value="1.1"></div>
+</div>
+<div class="note">Площадь стены = длина × высота − площадь проёмов. Проёмы задаются суммарно для одной стены. Количество стен умножает итоговые объёмы и массы.</div>
+</section>
+
+<section class="card">
+<h2>3. Слои стены</h2>
+<p class="hint">Добавляй слои в порядке от внутренней поверхности к наружной. Для кладочных слоёв указывай размеры одного кирпича или блока. Для утеплителя и воздушного зазора размеры единицы не нужны.</p>
+<div id="layers"></div>
+<div class="actions no-print">
+<button class="secondary" onclick="addLayer()">+ Добавить слой</button>
+<button class="secondary" onclick="loadWallPreset()">Загрузить пример многослойной стены</button>
+</div>
+<div class="note">Плотность вводится в кг/м³. Размеры кирпича/блока — в метрах. Шов учитывается как добавка к длине и высоте модуля при подсчёте количества изделий. Воздушный зазор имеет нулевую массу.</div>
+</section>
+
+<section class="card">
+<h2>4. Расчёт стены</h2>
+<div class="actions no-print">
+<button class="primary" onclick="calculateWall()">Рассчитать стену</button>
+<button class="secondary" onclick="addWallToSchedule()">Добавить расчёт в ведомость</button>
+<button class="secondary" onclick="clearCurrent()">Очистить форму</button>
+</div>
+<div id="result" class="hint">Заполни параметры и нажми «Рассчитать стену».</div>
+<div class="metrics" style="margin-top:16px">
+<div class="metric"><span>Площадь нетто одной стены</span><strong id="mArea">0,00</strong><small>м²</small></div>
+<div class="metric"><span>Общая толщина стены</span><strong id="mThickness">0</strong><small>мм</small></div>
+<div class="metric"><span>Масса стены на 1 м²</span><strong id="mMass">0,00</strong><small>кг/м²</small></div>
+<div class="metric"><span>Нагрузка расчётная</span><strong id="mLoad">0,00</strong><small>кН/м²</small></div>
+</div>
+<div class="metrics" style="margin-top:12px">
+<div class="metric"><span>Погонная нагрузка нормативная</span><strong id="mLineN">0,00</strong><small>кН/м</small></div>
+<div class="metric"><span>Погонная нагрузка расчётная</span><strong id="mLineD">0,00</strong><small>кН/м</small></div>
+<div class="metric"><span>Объём всех слоёв</span><strong id="mVolume">0,000</strong><small>м³</small></div>
+<div class="metric"><span>Масса всех стен</span><strong id="mTotalMass">0</strong><small>кг</small></div>
+</div>
+<div class="table-wrap" style="margin-top:16px">
+<table>
+<thead><tr><th>Слой</th><th>Материал</th><th class="num">Толщина, мм</th><th class="num">Объём, м³</th><th class="num">Масса, кг</th><th class="num">Изделия, шт.</th><th class="num">Раствор, м³</th></tr></thead>
+<tbody id="layerResults"><tr><td colspan="7" class="empty">Результаты появятся после расчёта</td></tr></tbody>
+</table>
+</div>
+</section>
+
+<section class="card">
+<h2>5. Ведомость стен</h2>
+<div class="table-wrap">
+<table>
+<thead><tr><th>№</th><th>Марка</th><th>Оси</th><th class="num">Кол-во</th><th class="num">Площадь, м²</th><th class="num">Толщина, мм</th><th class="num">Масса, кг</th><th class="num">qн, кН/м</th><th class="num">qд, кН/м</th><th class="no-print">Действие</th></tr></thead>
+<tbody id="schedule"><tr><td colspan="10" class="empty">Добавьте рассчитанную стену</td></tr></tbody>
+</table>
+</div>
+<div class="actions no-print">
+<button class="secondary" onclick="exportExcel()">Экспорт Excel</button>
+<button class="secondary" onclick="window.print()">Печать / PDF</button>
+<button class="secondary" onclick="saveCalculation()">Сохранить расчёт</button>
+<button class="secondary" onclick="loadCalculation()">Загрузить расчёт</button>
+<button class="danger" onclick="clearSchedule()">Очистить ведомость</button>
+</div>
+</section>
+
+<section class="card">
+<h2>6. Принятые формулы и ограничения</h2>
+<div class="note">
+<b>Площадь нетто:</b> A = L × H − Aпроёмов.<br>
+<b>Объём слоя:</b> V = A × t × n, где t — толщина слоя в метрах, n — число стен.<br>
+<b>Масса слоя:</b> G = V × ρ, где ρ — плотность материала в кг/м³.<br>
+<b>Масса 1 м²:</b> g = Σ(t × ρ), кг/м².<br>
+<b>Нормативная нагрузка:</b> qн = g × 9,81 / 1000, кН/м².<br>
+<b>Расчётная нагрузка:</b> qд = qн × γf, кН/м².<br>
+<b>Погонная нагрузка:</b> N = q × H, кН/м.<br>
+<b>Количество изделий:</b> N = A / [(длина изделия + шов) × (высота изделия + шов)]. Результат округляется вверх и умножается на количество стен и запас.<br>
+<b>Раствор:</b> объём кладочного раствора = площадь × расход раствора на 1 м² × количество стен. Расход задаётся пользователем.
+</div>
+<p class="footnote">Результат является предварительной оценкой собственного веса слоёв стены. Не включены штукатурка, крепления, связи, армирование кладки, перемычки, отделка и другие элементы, если они не внесены отдельными слоями. Коэффициент γf задаётся пользователем и должен быть принят по применимым нормам РК и расчётной ситуации. Для нагрузки на перекрытие важно определить фактическую схему опирания стены: распределённая, линейная или местная. Количество кирпича/блоков — оценка по модульным размерам, а не рабочая спецификация раскладки.</p>
+</section>
+</main>
+
+<script>
+const MATERIALS={
+"Силикатный кирпич":{density:1800,unitL:0.25,unitH:0.065,mortar:0.018,masonry:true},
+"Керамический кирпич":{density:1400,unitL:0.25,unitH:0.065,mortar:0.018,masonry:true},
+"Газобетонный блок":{density:600,unitL:0.6,unitH:0.2,mortar:0.008,masonry:true},
+"Пеноблок":{density:700,unitL:0.6,unitH:0.2,mortar:0.008,masonry:true},
+"Минеральная вата":{density:100,unitL:0,unitH:0,mortar:0,masonry:false},
+"Воздушный зазор":{density:0,unitL:0,unitH:0,mortar:0,masonry:false},
+"Цементная штукатурка":{density:1800,unitL:0,unitH:0,mortar:0,masonry:false},
+"Другое":{density:1000,unitL:0,unitH:0,mortar:0,masonry:false}
+};
+const PROJECT_KEY="masonry_project_v1",CALC_KEY="masonry_calc_v1";
+let layers=[],schedule=[],lastResult=null,editingLayer=null;
+
+function fmt(v,d=2){return Number(v).toLocaleString("ru-RU",{minimumFractionDigits:d,maximumFractionDigits:d})}
+function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function materialOptions(selected){return Object.keys(MATERIALS).map(m=>`<option ${m===selected?"selected":""}>${m}</option>`).join("")}
+
+function addLayer(data){
+ const x=data||{material:"Силикатный кирпич",thickness:0.38,density:1800,unitL:0.25,unitH:0.065,joint:0.01,mortar:0.018};
+ layers.push({...x,id:Date.now()+"_"+Math.random().toString(16).slice(2)});
+ renderLayers();
+}
+function removeLayer(id){layers=layers.filter(x=>x.id!==id);renderLayers()}
+function updateLayer(id,key,value){
+ const x=layers.find(l=>l.id===id);if(!x)return;
+ if(key==="material"){
+   const p=MATERIALS[value];x.material=value;x.density=p.density;x.unitL=p.unitL;x.unitH=p.unitH;x.mortar=p.mortar;
+ }else{x[key]=Number(value)}
+ renderLayers();
+}
+function renderLayers(){
+ const root=document.getElementById("layers");
+ if(!layers.length){root.innerHTML='<p class="empty">Добавь хотя бы один слой стены</p>';return}
+ root.innerHTML=layers.map((l,i)=>{
+ const masonry=MATERIALS[l.material]?.masonry;
+ return `<div class="layer-card">
+ <div class="layer-head"><strong>Слой ${i+1}</strong><button class="danger small no-print" onclick="removeLayer('${l.id}')">Удалить слой</button></div>
+ <div class="layer-grid">
+ <div class="field"><label>Материал</label><select onchange="updateLayer('${l.id}','material',this.value)">${materialOptions(l.material)}</select></div>
+ <div class="field"><label>Толщина слоя, м</label><input type="number" min="0" step="0.001" value="${l.thickness}" onchange="updateLayer('${l.id}','thickness',this.value)"></div>
+ <div class="field"><label>Плотность, кг/м³</label><input type="number" min="0" step="1" value="${l.density}" onchange="updateLayer('${l.id}','density',this.value)"></div>
+ <div class="field"><label>Расход раствора, м³/м²</label><input type="number" min="0" step="0.001" value="${l.mortar}" onchange="updateLayer('${l.id}','mortar',this.value)"></div>
+ ${masonry?`
+ <div class="field"><label>Длина изделия, м</label><input type="number" min="0" step="0.001" value="${l.unitL}" onchange="updateLayer('${l.id}','unitL',this.value)"></div>
+ <div class="field"><label>Высота изделия, м</label><input type="number" min="0" step="0.001" value="${l.unitH}" onchange="updateLayer('${l.id}','unitH',this.value)"></div>
+ <div class="field"><label>Толщина шва, м</label><input type="number" min="0" step="0.001" value="${l.joint}" onchange="updateLayer('${l.id}','joint',this.value)"></div>`:
+ `<div class="field"><label>Изделия</label><input value="Не рассчитываются" disabled></div>`}
+ </div></div>`}).join("");
+}
+function getInputs(){
+ const L=Number(document.getElementById("wallLength").value);
+ const H=Number(document.getElementById("wallHeight").value);
+ const qty=Number(document.getElementById("wallQuantity").value);
+ const openings=Number(document.getElementById("openings").value);
+ const waste=Number(document.getElementById("waste").value);
+ const gamma=Number(document.getElementById("gamma").value);
+ if(![L,H,qty,openings,waste,gamma].every(Number.isFinite)||L<=0||H<=0||qty<1||!Number.isInteger(qty)||openings<0||openings>=L*H||waste<0||gamma<=0){
+  alert("Проверь геометрию стены, площадь проёмов, количество и коэффициенты.");return null;
+ }
+ if(!layers.length){alert("Добавь хотя бы один слой стены.");return null}
+ for(const l of layers){
+  if(![l.thickness,l.density,l.unitL,l.unitH,l.joint,l.mortar].every(Number.isFinite)||l.thickness<=0||l.density<0||l.mortar<0||l.joint<0){
+   alert("Проверь параметры всех слоёв.");return null;
+  }
+  if(MATERIALS[l.material].masonry&&(l.unitL<=0||l.unitH<=0)){
+   alert("Для кирпича и блоков необходимо указать размеры изделия.");return null;
+  }
+ }
+ return {L,H,qty,openings,waste,gamma,area:L*H-openings};
+}
+function calculate(){
+ const p=getInputs();if(!p)return null;
+ const area=p.area,details=[];
+ let totalThickness=0,massPerM2=0,volume=0,totalMass=0,units=0,mortar=0;
+ layers.forEach((l,i)=>{
+  const t=l.thickness,d=l.density;
+  const v=area*t*p.qty;
+  const mass=v*d;
+  const material=MATERIALS[l.material];
+  let count=0,solution=0;
+  if(material.masonry){
+   const moduleArea=(l.unitL+l.joint)*(l.unitH+l.joint);
+   count=Math.ceil(area/moduleArea*(1+p.waste/100))*p.qty;
+   solution=area*l.mortar*p.qty;
+   units+=count;mortar+=solution;
+  }
+  totalThickness+=t;massPerM2+=t*d;volume+=v;totalMass+=mass;
+  details.push({index:i+1,material:l.material,thickness:t,density:d,volume:v,mass,units:count,mortar:solution});
+ });
+ const qn=massPerM2*9.81/1000;
+ const qd=qn*p.gamma;
+ const lineN=qn*p.H;
+ const lineD=qd*p.H;
+ const result={...p,totalThickness,massPerM2,qn,qd,lineN,lineD,volume,totalMass,details,units,mortar};
+ lastResult=result;
+ showResult(result);
+ return result;
+}
+function showResult(r){
+ document.getElementById("mArea").textContent=fmt(r.area);
+ document.getElementById("mThickness").textContent=fmt(r.totalThickness*1000,0);
+ document.getElementById("mMass").textContent=fmt(r.massPerM2);
+ document.getElementById("mLoad").textContent=fmt(r.qd);
+ document.getElementById("mLineN").textContent=fmt(r.lineN);
+ document.getElementById("mLineD").textContent=fmt(r.lineD);
+ document.getElementById("mVolume").textContent=fmt(r.volume,3);
+ document.getElementById("mTotalMass").textContent=fmt(r.totalMass,0);
+ document.getElementById("result").innerHTML=`<span class="badge">Расчёт выполнен</span> Общая площадь стен с учётом количества: <b>${fmt(r.area*r.qty)} м²</b>. Общая масса слоёв: <b>${fmt(r.totalMass,0)} кг</b>.`;
+ document.getElementById("layerResults").innerHTML=r.details.map(d=>`<tr><td>${d.index}</td><td>${esc(d.material)}</td><td class="num">${fmt(d.thickness*1000,0)}</td><td class="num">${fmt(d.volume,3)}</td><td class="num">${fmt(d.mass,1)}</td><td class="num">${d.units?d.units:"—"}</td><td class="num">${d.mortar?fmt(d.mortar,3):"—"}</td></tr>`).join("");
+}
+function calculateWall(){return calculate()}
+function addWallToSchedule(){
+ const r=calculate();if(!r)return;
+ const row={
+ id:Date.now()+"_"+Math.random().toString(16).slice(2),
+ mark:document.getElementById("wallMark").value.trim(),
+ axes:document.getElementById("wallAxes").value.trim(),
+ qty:r.qty,area:r.area*r.qty,thickness:r.totalThickness*1000,
+ mass:r.totalMass,lineN:r.lineN,lineD:r.lineD,
+ volume:r.volume,details:r.details.map(x=>({...x}))
+ };
+ schedule.push(row);renderSchedule();
+}
+function renderSchedule(){
+ const root=document.getElementById("schedule");
+ if(!schedule.length){root.innerHTML='<tr><td colspan="10" class="empty">Добавьте рассчитанную стену</td></tr>';return}
+ root.innerHTML=schedule.map((x,i)=>`<tr>
+ <td>${i+1}</td><td>${esc(x.mark||"—")}</td><td>${esc(x.axes||"—")}</td>
+ <td class="num">${x.qty}</td><td class="num">${fmt(x.area)}</td><td class="num">${fmt(x.thickness,0)}</td>
+ <td class="num">${fmt(x.mass,0)}</td><td class="num">${fmt(x.lineN)}</td><td class="num">${fmt(x.lineD)}</td>
+ <td class="no-print"><button class="danger small" onclick="deleteRow('${x.id}')">Удалить</button></td>
+ </tr>`).join("");
+}
+function deleteRow(id){schedule=schedule.filter(x=>x.id!==id);renderSchedule()}
+function clearSchedule(){if(!confirm("Очистить всю ведомость стен?"))return;schedule=[];renderSchedule()}
+function loadWallPreset(){
+ layers=[
+ {material:"Силикатный кирпич",thickness:.38,density:1800,unitL:.25,unitH:.065,joint:.01,mortar:.018},
+ {material:"Минеральная вата",thickness:.1,density:100,unitL:0,unitH:0,joint:0,mortar:0},
+ {material:"Воздушный зазор",thickness:.04,density:0,unitL:0,unitH:0,joint:0,mortar:0},
+ {material:"Керамический кирпич",thickness:.12,density:1400,unitL:.25,unitH:.065,joint:.01,mortar:.018}
+ ];
+ renderLayers();
+}
+function clearCurrent(){
+ if(!confirm("Очистить параметры текущей стены?"))return;
+ document.getElementById("wallMark").value="";
+ document.getElementById("wallAxes").value="";
+ document.getElementById("wallLength").value=6;
+ document.getElementById("wallHeight").value=3;
+ document.getElementById("wallQuantity").value=1;
+ document.getElementById("openings").value=0;
+ document.getElementById("waste").value=5;
+ document.getElementById("gamma").value=1.1;
+ layers=[];addLayer();
+ lastResult=null;
+ document.getElementById("result").textContent="Заполни параметры и нажми «Рассчитать стену».";
+ document.getElementById("layerResults").innerHTML='<tr><td colspan="7" class="empty">Результаты появятся после расчёта</td></tr>';
+ ["mArea","mThickness","mMass","mLoad","mLineN","mLineD","mVolume","mTotalMass"].forEach(id=>document.getElementById(id).textContent="0");
+}
+function projectData(){
+ const ids=["projectName","projectAddress","projectCode","projectStage","projectSection","projectSheet","projectAuthor","projectDate"];
+ return Object.fromEntries(ids.map(id=>[id,document.getElementById(id).value]));
+}
+function saveProject(){localStorage.setItem(PROJECT_KEY,JSON.stringify(projectData()));alert("Данные проекта сохранены в этом браузере.")}
+function loadProject(){
+ const s=localStorage.getItem(PROJECT_KEY);if(!s){alert("Сохранённый проект не найден.");return}
+ const p=JSON.parse(s);Object.keys(p).forEach(id=>{if(document.getElementById(id))document.getElementById(id).value=p[id]});alert("Данные проекта загружены.");
+}
+function saveCalculation(){
+ const data={layers,schedule,project:projectData()};
+ localStorage.setItem(CALC_KEY,JSON.stringify(data));alert("Расчёт сохранён в этом браузере.");
+}
+function loadCalculation(){
+ const s=localStorage.getItem(CALC_KEY);if(!s){alert("Сохранённый расчёт не найден.");return}
+ try{const d=JSON.parse(s);layers=d.layers||[];schedule=d.schedule||[];renderLayers();renderSchedule();if(d.project)Object.keys(d.project).forEach(id=>{if(document.getElementById(id))document.getElementById(id).value=d.project[id]});alert("Расчёт загружен.");}
+ catch(e){alert("Не удалось загрузить расчёт.");}
+}
+function exportExcel(){
+ if(!schedule.length){alert("Сначала добавь стену в ведомость.");return}
+ if(typeof XLSX==="undefined"){alert("Библиотека Excel не загрузилась. Проверь интернет и обнови страницу.");return}
+ const wb=XLSX.utils.book_new();
+ const walls=schedule.map((x,i)=>({"№":i+1,"Марка":x.mark,"Оси":x.axes,"Количество стен":x.qty,"Площадь, м²":x.area,"Толщина, мм":x.thickness,"Масса, кг":x.mass,"Погонная нагрузка нормативная, кН/м":x.lineN,"Погонная нагрузка расчётная, кН/м":x.lineD,"Объём слоёв, м³":x.volume}));
+ const detail=[];
+ schedule.forEach((x,i)=>x.details.forEach(d=>detail.push({"№ стены":i+1,"Марка":x.mark,"Слой":d.index,"Материал":d.material,"Толщина, мм":d.thickness*1000,"Объём, м³":d.volume,"Масса, кг":d.mass,"Количество изделий, шт.":d.units,"Раствор, м³":d.mortar})));
+ const project=Object.entries(projectData()).map(([k,v])=>({Параметр:k,Значение:v}));
+ XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(walls),"Ведомость стен");
+ XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(detail),"Слои стен");
+ XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(project),"Данные проекта");
+ XLSX.writeFile(wb,"Masonry_ведомость.xlsx");
+}
+document.getElementById("projectDate").value=new Date().toISOString().slice(0,10);
+addLayer();
+</script>
+</body>
+</html>
+

@@ -6,8 +6,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Engineering Calculator RK — Loads</title>
 
-<!-- Excel с поддержкой оформления ячеек -->
-<script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
 <style>
 * { box-sizing: border-box; }
@@ -164,6 +163,127 @@ th {
   line-height: 1.6;
 }
 
+/* Печатная форма скрыта на обычной странице */
+#printDocument {
+  display: none;
+}
+
+/* Настройки печати */
+@page {
+  size: A4 landscape;
+  margin: 15mm;
+}
+
+@media print {
+
+  body {
+    background: white !important;
+    color: black !important;
+  }
+
+  body * {
+    visibility: hidden !important;
+  }
+
+  #printDocument,
+  #printDocument * {
+    visibility: visible !important;
+  }
+
+  #printDocument {
+    display: block !important;
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    padding: 0;
+    margin: 0;
+    font-family: Arial, sans-serif;
+    color: #111;
+    background: white;
+  }
+
+  #printDocument h1 {
+    text-align: center;
+    font-size: 18px;
+    margin: 0 0 24px;
+    text-transform: uppercase;
+  }
+
+  #printDocument .print-info {
+    font-size: 12px;
+    line-height: 1.8;
+    margin-bottom: 18px;
+  }
+
+  #printDocument table {
+    width: 100%;
+    min-width: 0;
+    border-collapse: collapse;
+    margin-top: 10px;
+    page-break-inside: auto;
+  }
+
+  #printDocument th,
+  #printDocument td {
+    border: 1px solid #333;
+    padding: 8px 7px;
+    font-size: 10px;
+    color: black;
+  }
+
+  #printDocument th {
+    background: #dce6f1 !important;
+    font-weight: bold;
+    text-align: center;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  #printDocument td.num {
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  #printDocument tr {
+    page-break-inside: avoid;
+  }
+
+  #printDocument .total-row td {
+    font-weight: bold;
+    background: #e8eef5 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  #printDocument .print-section-title {
+    font-weight: bold;
+    font-size: 12px;
+    margin-top: 22px;
+    margin-bottom: 8px;
+  }
+
+  #printDocument .signatures {
+    display: flex;
+    justify-content: space-between;
+    gap: 50px;
+    margin-top: 55px;
+    font-size: 12px;
+  }
+
+  #printDocument .signature {
+    width: 45%;
+    border-bottom: 1px solid #333;
+    padding-bottom: 7px;
+  }
+
+  #printDocument .print-footer {
+    margin-top: 25px;
+    font-size: 9px;
+    color: #555;
+  }
+}
+
 @media(max-width: 600px) {
   header { padding: 18px; }
   .panel { padding: 14px; }
@@ -247,6 +367,10 @@ th {
     Скачать ведомость Excel (.xlsx)
   </button>
 
+  <button class="primary" id="printButton" type="button">
+    Печать ведомости / PDF
+  </button>
+
   <div class="table-wrap">
     <table>
       <thead>
@@ -311,6 +435,9 @@ th {
 
 </main>
 
+<!-- Отдельная печатная форма -->
+<div id="printDocument"></div>
+
 <script>
 "use strict";
 
@@ -325,6 +452,22 @@ function number(value) {
 
 function showStatus(message) {
   $("status").textContent = message;
+}
+
+function getTotals() {
+  const permanent = loads
+    .filter(item => item.type === "permanent")
+    .reduce((sum, item) => sum + item.value * item.gamma, 0);
+
+  const variable = loads
+    .filter(item => item.type === "variable")
+    .reduce((sum, item) => sum + item.value * item.gamma, 0);
+
+  return {
+    permanent,
+    variable,
+    total: permanent + variable
+  };
 }
 
 function resetForm() {
@@ -403,19 +546,11 @@ function render() {
     table.appendChild(row);
   });
 
-  const permanent = loads
-    .filter(item => item.type === "permanent")
-    .reduce((sum, item) => sum + item.value * item.gamma, 0);
+  const totals = getTotals();
 
-  const variable = loads
-    .filter(item => item.type === "variable")
-    .reduce((sum, item) => sum + item.value * item.gamma, 0);
-
-  const total = permanent + variable;
-
-  $("permanentTotal").textContent = number(permanent);
-  $("variableTotal").textContent = number(variable);
-  $("grandTotal").textContent = number(total);
+  $("permanentTotal").textContent = number(totals.permanent);
+  $("variableTotal").textContent = number(totals.variable);
+  $("grandTotal").textContent = number(totals.total);
 
   const area = Number($("area").value);
 
@@ -423,7 +558,7 @@ function render() {
     $("areaResult").textContent =
       "Расчётная площадь: " + number(area) + " м².";
 
-    $("totalForce").textContent = number(total * area);
+    $("totalForce").textContent = number(totals.total * area);
   } else {
     $("areaResult").textContent = "Площадь не задана.";
     $("totalForce").textContent = "0.00";
@@ -525,7 +660,7 @@ render();
 
 
 // --------------------------------------------------
-// ЭКСПОРТ В EXCEL С ПРОФЕССИОНАЛЬНЫМ ОФОРМЛЕНИЕМ
+// ЭКСПОРТ В EXCEL
 // --------------------------------------------------
 
 $("exportButton").addEventListener("click", () => {
@@ -540,26 +675,17 @@ $("exportButton").addEventListener("click", () => {
     return;
   }
 
-  const permanent = loads
-    .filter(item => item.type === "permanent")
-    .reduce((sum, item) => sum + item.value * item.gamma, 0);
-
-  const variable = loads
-    .filter(item => item.type === "variable")
-    .reduce((sum, item) => sum + item.value * item.gamma, 0);
-
-  const total = permanent + variable;
+  const totals = getTotals();
   const areaText = $("area").value;
   const area = Number(areaText);
-  const objectName = $("objectName").value.trim() || "Не указан";
 
   const rows = [
     ["ВЕДОМОСТЬ СБОРА НАГРУЗОК"],
-    ["Объект", objectName],
-    ["Расчётная площадь, м²", areaText !== "" && area > 0 ? area : "Не задана"],
+    ["Объект", $("objectName").value],
+    ["Площадь, м²", areaText !== "" ? area : ""],
     [],
     [
-      "Наименование нагрузки",
+      "Наименование",
       "Категория",
       "Нормативная нагрузка, кН/м²",
       "Коэффициент γf",
@@ -579,340 +705,44 @@ $("exportButton").addEventListener("click", () => {
 
   rows.push(
     [],
-    ["ИТОГИ РАСЧЁТА"],
-    ["Постоянные нагрузки, кН/м²", permanent],
-    ["Временные нагрузки, кН/м²", variable],
-    ["Общая расчётная нагрузка, кН/м²", total],
-    ["Полная расчётная сила, кН",
-      areaText !== "" && area > 0 ? total * area : "Не задана"]
+    ["ИТОГИ"],
+    ["Постоянные нагрузки, кН/м²", totals.permanent],
+    ["Временные нагрузки, кН/м²", totals.variable],
+    ["Общая нагрузка, кН/м²", totals.total],
+    [
+      "Полная сила, кН",
+      areaText !== "" && area > 0
+        ? totals.total * area
+        : "Не задана"
+    ]
   );
 
   const worksheet = XLSX.utils.aoa_to_sheet(rows);
 
-  // Цвета оформления
-  const navy = "172B4D";
-  const blue = "DCEAF7";
-  const lightBlue = "EEF4FA";
-  const white = "FFFFFF";
-  const gray = "DCE2EA";
-  const dark = "24364B";
-  const green = "E2F0D9";
-
-  // Автоматический расчёт ширины столбцов
-  const columnWidths = [];
-
-  for (let col = 0; col < 5; col++) {
-    let maxLength = 12;
-
-    rows.forEach(row => {
-      const value = row[col];
-
-      if (value !== undefined && value !== null) {
-        maxLength = Math.max(maxLength, String(value).length);
-      }
-    });
-
-    columnWidths.push({
-      wch: Math.min(Math.max(maxLength + 3, 16), 42)
-    });
-  }
-
-  worksheet["!cols"] = columnWidths;
-
-  // Высота строк
-  worksheet["!rows"] = rows.map((row, index) => {
-    if (index === 0) return { hpt: 30 };
-    if (index === 4) return { hpt: 34 };
-    if (row.length === 1 && row[0] === "ИТОГИ РАСЧЁТА") {
-      return { hpt: 25 };
-    }
-    return { hpt: 22 };
-  });
-
-  // Границы ячеек
-  const thinBorder = {
-    top: { style: "thin", color: { rgb: gray } },
-    bottom: { style: "thin", color: { rgb: gray } },
-    left: { style: "thin", color: { rgb: gray } },
-    right: { style: "thin", color: { rgb: gray } }
-  };
-
-  const range = XLSX.utils.decode_range(worksheet["!ref"]);
-
-  // Базовое оформление всех заполненных ячеек
-  for (let row = range.s.r; row <= range.e.r; row++) {
-    for (let col = range.s.c; col <= range.e.c; col++) {
-
-      const address = XLSX.utils.encode_cell({
-        r: row,
-        c: col
-      });
-
-      const cell = worksheet[address];
-
-      if (!cell) continue;
-
-      cell.s = {
-        font: {
-          name: "Arial",
-          sz: 10,
-          color: { rgb: dark }
-        },
-        alignment: {
-          vertical: "center",
-          horizontal: col === 0 ? "left" : "center",
-          wrapText: true
-        },
-        border: thinBorder
-      };
-
-      // Числовой формат
-      if (cell.t === "n") {
-        cell.z = "0.00";
-        cell.s.alignment = {
-          horizontal: "right",
-          vertical: "center"
-        };
-      }
-    }
-  }
-
-  // Главный заголовок
-  const titleCell = worksheet["A1"];
-
-  titleCell.s = {
-    font: {
-      name: "Arial",
-      sz: 16,
-      bold: true,
-      color: { rgb: white }
-    },
-    fill: {
-      fgColor: { rgb: navy }
-    },
-    alignment: {
-      horizontal: "center",
-      vertical: "center"
-    },
-    border: thinBorder
-  };
-
-  // Заливка всей строки заголовка
-  for (let col = 0; col < 5; col++) {
-    const cell = worksheet[XLSX.utils.encode_cell({
-      r: 0,
-      c: col
-    })];
-
-    if (cell) {
-      cell.s = {
-        fill: { fgColor: { rgb: navy } },
-        border: thinBorder
-      };
-    }
-  }
-
-  // Объединяем ячейки заголовка
-  worksheet["!merges"] = [
-    { s: { r: 0, c: 0 }, e: { r: 0, c: 4 } }
+  worksheet["!cols"] = [
+    { wch: 35 },
+    { wch: 18 },
+    { wch: 25 },
+    { wch: 20 },
+    { wch: 25 }
   ];
 
-  // Оформление исходных данных
-  [1, 2].forEach(rowIndex => {
-    for (let col = 0; col < 5; col++) {
-      const cell = worksheet[XLSX.utils.encode_cell({
-        r: rowIndex,
-        c: col
-      })];
+  if (worksheet["!ref"]) {
+    const range = XLSX.utils.decode_range(worksheet["!ref"]);
 
-      if (cell) {
-        cell.s = {
-          font: {
-            name: "Arial",
-            sz: 10,
-            bold: col === 0,
-            color: { rgb: dark }
-          },
-          fill: {
-            fgColor: { rgb: col === 0 ? blue : white }
-          },
-          alignment: {
-            horizontal: col === 0 ? "left" : "left",
-            vertical: "center",
-            wrapText: true
-          },
-          border: thinBorder
-        };
-      }
-    }
-  });
+    for (let row = range.s.r; row <= range.e.r; row++) {
+      for (let col = range.s.c; col <= range.e.c; col++) {
+        const address = XLSX.utils.encode_cell({ r: row, c: col });
+        const cell = worksheet[address];
 
-  // Шапка таблицы
-  const headerRow = 4;
-
-  for (let col = 0; col < 5; col++) {
-    const cell = worksheet[XLSX.utils.encode_cell({
-      r: headerRow,
-      c: col
-    })];
-
-    if (cell) {
-      cell.s = {
-        font: {
-          name: "Arial",
-          sz: 10,
-          bold: true,
-          color: { rgb: white }
-        },
-        fill: {
-          fgColor: { rgb: navy }
-        },
-        alignment: {
-          horizontal: "center",
-          vertical: "center",
-          wrapText: true
-        },
-        border: thinBorder
-      };
-    }
-  }
-
-  // Строки с нагрузками
-  const firstDataRow = 5;
-  const lastDataRow = firstDataRow + loads.length - 1;
-
-  for (let row = firstDataRow; row <= lastDataRow; row++) {
-    for (let col = 0; col < 5; col++) {
-
-      const cell = worksheet[XLSX.utils.encode_cell({
-        r: row,
-        c: col
-      })];
-
-      if (!cell) continue;
-
-      cell.s = {
-        font: {
-          name: "Arial",
-          sz: 10,
-          color: { rgb: dark }
-        },
-        fill: {
-          fgColor: {
-            rgb: (row - firstDataRow) % 2 === 0
-              ? white
-              : lightBlue
-          }
-        },
-        alignment: {
-          horizontal: col === 0 ? "left" : "right",
-          vertical: "center",
-          wrapText: true
-        },
-        border: thinBorder
-      };
-
-      if (cell.t === "n") {
-        cell.z = "0.00";
-      }
-
-      if (col === 1) {
-        cell.s.alignment.horizontal = "center";
+        if (cell && cell.t === "n") {
+          cell.z = "0.00";
+        }
       }
     }
   }
 
-  // Автофильтр по заголовкам таблицы
-  worksheet["!autofilter"] = {
-    ref: `A5:E${lastDataRow + 1}`
-  };
-
-  // Строка ИТОГИ
-  const summaryTitleRow = lastDataRow + 2;
-
-  for (let col = 0; col < 5; col++) {
-    const cell = worksheet[XLSX.utils.encode_cell({
-      r: summaryTitleRow,
-      c: col
-    })];
-
-    if (cell) {
-      cell.s = {
-        font: {
-          name: "Arial",
-          sz: 11,
-          bold: true,
-          color: { rgb: white }
-        },
-        fill: {
-          fgColor: { rgb: navy }
-        },
-        alignment: {
-          horizontal: "left",
-          vertical: "center"
-        },
-        border: thinBorder
-      };
-    }
-  }
-
-  // Строки итоговых значений
-  const summaryStartRow = summaryTitleRow + 1;
-  const summaryEndRow = summaryStartRow + 3;
-
-  for (let row = summaryStartRow; row <= summaryEndRow; row++) {
-    for (let col = 0; col < 5; col++) {
-
-      const cell = worksheet[XLSX.utils.encode_cell({
-        r: row,
-        c: col
-      })];
-
-      if (!cell) continue;
-
-      const isFinalTotal = row === summaryStartRow + 2;
-
-      cell.s = {
-        font: {
-          name: "Arial",
-          sz: 10,
-          bold: isFinalTotal,
-          color: { rgb: dark }
-        },
-        fill: {
-          fgColor: {
-            rgb: isFinalTotal ? green : blue
-          }
-        },
-        alignment: {
-          horizontal: col === 0 ? "left" : "right",
-          vertical: "center",
-          wrapText: true
-        },
-        border: thinBorder
-      };
-
-      if (cell.t === "n") {
-        cell.z = "0.00";
-      }
-    }
-  }
-
-  // Объединение заголовка итогов
-  worksheet["!merges"].push({
-    s: { r: summaryTitleRow, c: 0 },
-    e: { r: summaryTitleRow, c: 4 }
-  });
-
-  // Создание книги Excel
   const workbook = XLSX.utils.book_new();
-
-  workbook.Props = {
-    Title: "Ведомость сбора нагрузок",
-    Subject: "Engineering Calculator RK",
-    Author: "Engineering Calculator RK",
-    Company: "Engineering Calculator RK"
-  };
 
   XLSX.utils.book_append_sheet(
     workbook,
@@ -920,13 +750,219 @@ $("exportButton").addEventListener("click", () => {
     "Ведомость нагрузок"
   );
 
-  // Экспорт файла
   XLSX.writeFile(
     workbook,
     "vedomost_nagruzok.xlsx"
   );
 
-  showStatus("Оформленная ведомость Excel успешно сформирована.");
+  showStatus("Файл Excel успешно сформирован.");
+});
+
+
+// --------------------------------------------------
+// ФОРМИРОВАНИЕ ПЕЧАТНОЙ ВЕДОМОСТИ
+// --------------------------------------------------
+
+$("printButton").addEventListener("click", () => {
+
+  if (loads.length === 0) {
+    showStatus("Сначала добавьте хотя бы одну нагрузку.");
+    return;
+  }
+
+  const totals = getTotals();
+
+  const areaText = $("area").value;
+  const area = Number(areaText);
+
+  const objectName =
+    $("objectName").value.trim() || "Не указано";
+
+  const printArea = $("printDocument");
+
+  // Очищаем предыдущую печатную форму
+  printArea.replaceChildren();
+
+  // Заголовок
+  const title = document.createElement("h1");
+  title.textContent = "Ведомость сбора нагрузок";
+
+  printArea.appendChild(title);
+
+  // Исходные данные
+  const info = document.createElement("div");
+  info.className = "print-info";
+
+  const objectLine = document.createElement("div");
+  objectLine.textContent = "Объект: " + objectName;
+
+  const areaLine = document.createElement("div");
+  areaLine.textContent =
+    "Расчётная площадь: " +
+    (
+      areaText !== "" && Number.isFinite(area) && area > 0
+        ? number(area) + " м²"
+        : "не задана"
+    );
+
+  const dateLine = document.createElement("div");
+  dateLine.textContent =
+    "Дата формирования: " +
+    new Date().toLocaleDateString("ru-RU");
+
+  info.append(objectLine, areaLine, dateLine);
+  printArea.appendChild(info);
+
+  // Заголовок таблицы
+  const sectionTitle = document.createElement("div");
+  sectionTitle.className = "print-section-title";
+  sectionTitle.textContent = "Ведомость нагрузок";
+
+  printArea.appendChild(sectionTitle);
+
+  // Таблица
+  const table = document.createElement("table");
+  const thead = document.createElement("thead");
+  const headerRow = document.createElement("tr");
+
+  const headers = [
+    "№",
+    "Наименование нагрузки",
+    "Категория нагрузки",
+    "Нормативная нагрузка qн, кН/м²",
+    "Коэффициент надёжности γf",
+    "Расчётная нагрузка qр, кН/м²"
+  ];
+
+  headers.forEach(text => {
+    const th = document.createElement("th");
+    th.textContent = text;
+    headerRow.appendChild(th);
+  });
+
+  thead.appendChild(headerRow);
+  table.appendChild(thead);
+
+  const tbody = document.createElement("tbody");
+
+  loads.forEach((item, index) => {
+    const row = document.createElement("tr");
+
+    const values = [
+      index + 1,
+      item.name,
+      item.type === "permanent" ? "Постоянная" : "Временная",
+      number(item.value),
+      number(item.gamma),
+      number(item.value * item.gamma)
+    ];
+
+    values.forEach((value, cellIndex) => {
+      const td = document.createElement("td");
+      td.textContent = value;
+
+      if (cellIndex === 0 || cellIndex >= 3) {
+        td.className = "num";
+      }
+
+      row.appendChild(td);
+    });
+
+    tbody.appendChild(row);
+  });
+
+  // Строка итогов
+  const totalRow = document.createElement("tr");
+  totalRow.className = "total-row";
+
+  const totalLabel = document.createElement("td");
+  totalLabel.colSpan = 5;
+  totalLabel.textContent = "ИТОГО: общая расчётная нагрузка";
+
+  const totalValue = document.createElement("td");
+  totalValue.className = "num";
+  totalValue.textContent = number(totals.total);
+
+  totalRow.append(totalLabel, totalValue);
+  tbody.appendChild(totalRow);
+
+  table.appendChild(tbody);
+  printArea.appendChild(table);
+
+  // Сводная часть
+  const summaryTitle = document.createElement("div");
+  summaryTitle.className = "print-section-title";
+  summaryTitle.textContent = "Итоговые значения";
+
+  printArea.appendChild(summaryTitle);
+
+  const summaryTable = document.createElement("table");
+  const summaryBody = document.createElement("tbody");
+
+  const summaryRows = [
+    ["Сумма постоянных нагрузок, кН/м²", number(totals.permanent)],
+    ["Сумма временных нагрузок, кН/м²", number(totals.variable)],
+    ["Общая расчётная нагрузка, кН/м²", number(totals.total)],
+    [
+      "Полная расчётная сила на площадь, кН",
+      areaText !== "" && Number.isFinite(area) && area > 0
+        ? number(totals.total * area)
+        : "Не задана"
+    ]
+  ];
+
+  summaryRows.forEach((values, index) => {
+    const row = document.createElement("tr");
+
+    if (index === 2) {
+      row.className = "total-row";
+    }
+
+    const labelCell = document.createElement("td");
+    labelCell.textContent = values[0];
+
+    const valueCell = document.createElement("td");
+    valueCell.className = "num";
+    valueCell.textContent = values[1];
+
+    row.append(labelCell, valueCell);
+    summaryBody.appendChild(row);
+  });
+
+  summaryTable.appendChild(summaryBody);
+  printArea.appendChild(summaryTable);
+
+  // Подписи
+  const signatures = document.createElement("div");
+  signatures.className = "signatures";
+
+  const author = document.createElement("div");
+  author.className = "signature";
+  author.textContent = "Составил: __________________________";
+
+  const reviewer = document.createElement("div");
+  reviewer.className = "signature";
+  reviewer.textContent = "Проверил: __________________________";
+
+  signatures.append(author, reviewer);
+  printArea.appendChild(signatures);
+
+  // Примечание
+  const footer = document.createElement("div");
+  footer.className = "print-footer";
+  footer.textContent =
+    "Примечание: расчёт выполнен путём арифметического суммирования введённых нагрузок. " +
+    "Подбор нормативных коэффициентов и сочетаний нагрузок выполняется отдельно " +
+    "в соответствии с применимыми нормами РК.";
+
+  printArea.appendChild(footer);
+
+  showStatus("Печатная форма подготовлена. Откройте окно печати.");
+
+  // Небольшая задержка для подготовки документа браузером
+  setTimeout(() => {
+    window.print();
+  }, 300);
 });
 
 </script>

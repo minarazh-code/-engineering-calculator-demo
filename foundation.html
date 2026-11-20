@@ -1,1 +1,406 @@
 
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Калькулятор фундаментов</title>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
+:root{--bg:#f3f6fa;--card:#fff;--text:#1d2939;--muted:#667085;--blue:#2457a7;--line:#dfe5ed;--green:#16834a;--red:#c0392b}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);font-family:Arial,sans-serif;color:var(--text)}
+header{background:#172b4d;color:white;padding:24px 5%;box-shadow:0 3px 12px #0002}
+header h1{margin:0 0 7px;font-size:25px}
+header p{margin:0;color:#d5deec;font-size:14px}
+main{max-width:1200px;margin:25px auto;padding:0 16px 40px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:20px;margin-bottom:18px;box-shadow:0 3px 12px #1d29390a}
+h2{font-size:18px;margin:0 0 16px}
+h3{font-size:15px;margin:18px 0 10px}
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.field{display:flex;flex-direction:column;gap:6px}
+label{font-size:13px;color:#475467;font-weight:600}
+input,select{width:100%;padding:11px;border:1px solid #cbd5e1;border-radius:7px;font-size:15px;background:white;color:var(--text)}
+input:focus,select:focus{outline:2px solid #9bbcf0;border-color:var(--blue)}
+.unit{font-size:11px;color:var(--muted)}
+button{border:0;border-radius:8px;padding:12px 17px;font-size:14px;font-weight:600;cursor:pointer}
+.primary{background:var(--blue);color:white}
+.secondary{background:#e9eef6;color:#233b60}
+.actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}
+.results{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.metric{padding:16px;background:#f5f8fc;border:1px solid var(--line);border-radius:9px}
+.metric small{display:block;color:var(--muted);font-size:12px;margin-bottom:8px}
+.metric strong{font-size:22px;display:block}
+.metric span{font-size:12px;color:var(--muted)}
+.status{padding:13px 15px;border-radius:8px;font-weight:700;margin-top:14px}
+.good{background:#e8f6ee;color:#176b3d}
+.bad{background:#fff0ed;color:#a52b20}
+.neutral{background:#edf2f8;color:#34445c}
+.note{font-size:13px;color:#667085;line-height:1.55}
+.warning{border-left:4px solid #d69b27;background:#fff9e9;padding:13px 15px;border-radius:5px;font-size:13px;line-height:1.55}
+table{width:100%;border-collapse:collapse;margin-top:12px;font-size:13px}
+th,td{border:1px solid var(--line);padding:10px;text-align:left}
+th{background:#f2f5f9}
+.hidden{display:none!important}
+footer{text-align:center;color:#8490a1;font-size:12px;padding:20px}
+@media(max-width:750px){.grid,.results{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:480px){.grid,.results{grid-template-columns:1fr}.card{padding:15px}header h1{font-size:21px}}
+@media print{
+body{background:white}
+header{background:white;color:#111;padding:10px 0;box-shadow:none}
+header p{color:#444}
+main{margin:0;max-width:none;padding:0}
+.card{box-shadow:none;break-inside:avoid;border:1px solid #bbb}
+.actions,.no-print{display:none!important}
+input,select{border:0;padding:2px}
+}
+</style>
+</head>
+<body>
+<header>
+<h1>Калькулятор фундаментов</h1>
+<p>Предварительный расчёт геометрии, объёма бетона и давления под подошвой</p>
+</header>
+
+<main>
+<section class="card">
+<h2>1. Данные проекта</h2>
+<div class="grid">
+<div class="field"><label>Наименование объекта</label><input id="project" placeholder="Название объекта"></div>
+<div class="field"><label>Шифр проекта</label><input id="code" placeholder="Шифр"></div>
+<div class="field"><label>Раздел / конструкция</label><input id="section" placeholder="КЖ / Фундамент"></div>
+<div class="field"><label>Ось / расположение</label><input id="axis" placeholder="Например, А-1"></div>
+<div class="field"><label>Автор расчёта</label><input id="author" placeholder="Ф.И.О."></div>
+<div class="field"><label>Дата</label><input id="date" type="date"></div>
+</div>
+</section>
+
+<section class="card">
+<h2>2. Тип фундамента</h2>
+<div class="grid">
+<div class="field">
+<label>Выберите тип</label>
+<select id="type" onchange="changeType()">
+<option value="strip">Ленточный фундамент</option>
+<option value="isolated">Отдельно стоящий фундамент</option>
+<option value="raft">Плитный фундамент</option>
+</select>
+</div>
+<div class="field">
+<label>Удельный вес бетона</label>
+<input id="gammaConcrete" type="number" value="25" min="0" step="0.1">
+<span class="unit">кН/м³</span>
+</div>
+<div class="field">
+<label>Класс бетона</label>
+<select id="concreteClass">
+<option>B15</option><option>B20</option><option selected>B25</option>
+<option>B30</option><option>B35</option><option>B40</option>
+<option>Другой</option>
+</select>
+</div>
+</div>
+
+<h3>Геометрические размеры</h3>
+<div id="stripFields" class="grid">
+<div class="field"><label>Длина фундамента L</label><input id="stripL" type="number" value="10" min="0" step="0.01"><span class="unit">м</span></div>
+<div class="field"><label>Ширина подошвы B</label><input id="stripB" type="number" value="1.2" min="0" step="0.01"><span class="unit">м</span></div>
+<div class="field"><label>Высота фундамента H</label><input id="stripH" type="number" value="0.8" min="0" step="0.01"><span class="unit">м</span></div>
+</div>
+
+<div id="isolatedFields" class="grid hidden">
+<div class="field"><label>Размер подошвы B</label><input id="isoB" type="number" value="2" min="0" step="0.01"><span class="unit">м</span></div>
+<div class="field"><label>Размер подошвы L</label><input id="isoL" type="number" value="2" min="0" step="0.01"><span class="unit">м</span></div>
+<div class="field"><label>Высота фундамента H</label><input id="isoH" type="number" value="0.8" min="0" step="0.01"><span class="unit">м</span></div>
+</div>
+
+<div id="raftFields" class="grid hidden">
+<div class="field"><label>Длина плиты L</label><input id="raftL" type="number" value="20" min="0" step="0.01"><span class="unit">м</span></div>
+<div class="field"><label>Ширина плиты B</label><input id="raftB" type="number" value="10" min="0" step="0.01"><span class="unit">м</span></div>
+<div class="field"><label>Толщина плиты H</label><input id="raftH" type="number" value="0.8" min="0" step="0.01"><span class="unit">м</span></div>
+</div>
+</section>
+
+<section class="card">
+<h2>3. Нагрузки</h2>
+<div class="grid">
+<div class="field" id="loadField">
+<label id="loadLabel">Погонная нагрузка N</label>
+<input id="load" type="number" value="200" min="0" step="0.1">
+<span class="unit" id="loadUnit">кН/м</span>
+</div>
+<div class="field">
+<label>Дополнительная нагрузка</label>
+<input id="extra" type="number" value="0" min="0" step="0.1">
+<span class="unit" id="extraUnit">кН/м</span>
+</div>
+<div class="field">
+<label>Расчётное сопротивление грунта R</label>
+<input id="soilR" type="number" value="200" min="0" step="1">
+<span class="unit">кПа (кН/м²), по данным изысканий</span>
+</div>
+</div>
+<p class="note" id="loadHelp">Укажите погонную нагрузку от надземной конструкции. Дополнительная нагрузка учитывается отдельно.</p>
+</section>
+
+<section class="card">
+<h2>4. Предварительная оценка осадки</h2>
+<p class="note">Упрощённая оценка по введённому пользователем среднему дополнительному давлению, модулю деформации и толщине сжимаемой толщи. Это не нормативный расчёт осадки основания.</p>
+<div class="grid">
+<div class="field">
+<label>Дополнительное давление q</label>
+<input id="qSettlement" type="number" value="100" min="0" step="0.1">
+<span class="unit">кПа</span>
+</div>
+<div class="field">
+<label>Модуль деформации E</label>
+<input id="soilE" type="number" value="10" min="0" step="0.1">
+<span class="unit">МПа</span>
+</div>
+<div class="field">
+<label>Толщина сжимаемой толщи H</label>
+<input id="soilH" type="number" value="3" min="0" step="0.1">
+<span class="unit">м</span>
+</div>
+<div class="field">
+<label>Коэффициент β</label>
+<input id="beta" type="number" value="0.8" min="0" step="0.05">
+<span class="unit">безразмерный, задаётся проектировщиком</span>
+</div>
+</div>
+</section>
+
+<section class="card">
+<h2>5. Результаты расчёта</h2>
+<div class="results">
+<div class="metric"><small>Площадь подошвы</small><strong id="area">—</strong><span>м²</span></div>
+<div class="metric"><small>Объём бетона</small><strong id="volume">—</strong><span>м³</span></div>
+<div class="metric"><small>Собственный вес</small><strong id="weight">—</strong><span>кН</span></div>
+<div class="metric"><small>Полная нагрузка</small><strong id="totalLoad">—</strong><span>кН</span></div>
+<div class="metric"><small>Среднее давление p</small><strong id="pressure">—</strong><span>кПа</span></div>
+<div class="metric"><small>Использование R</small><strong id="utilization">—</strong><span>%</span></div>
+</div>
+<div id="bearingStatus" class="status neutral">Введите исходные данные для расчёта</div>
+<h3>Дополнительные результаты</h3>
+<div class="results">
+<div class="metric"><small>Ориентировочная осадка</small><strong id="settlement">—</strong><span>мм</span></div>
+<div class="metric"><small>Масса бетона</small><strong id="mass">—</strong><span>т (приближённо)</span></div>
+<div class="metric"><small>Класс бетона</small><strong id="classResult">B25</strong><span>по выбранному значению</span></div>
+</div>
+<div id="settlementStatus" class="status neutral">Оценка осадки не выполнена</div>
+<div class="warning" style="margin-top:16px">
+<strong>Инженерное предупреждение.</strong> Среднее давление не учитывает эксцентриситет, изгиб подошвы, распределение контактных напряжений, глубину заложения и влияние соседних фундаментов. Для полноценной проверки необходимы инженерно-геологические данные и расчёт по действующим нормам Республики Казахстан.
+</div>
+<div class="actions no-print">
+<button class="primary" onclick="calculate()">Рассчитать</button>
+<button class="secondary" onclick="saveData()">Сохранить проект</button>
+<button class="secondary" onclick="loadData()">Загрузить проект</button>
+<button class="secondary" onclick="exportExcel()">Экспорт в Excel</button>
+<button class="secondary" onclick="window.print()">Печать / PDF</button>
+<button class="secondary" onclick="resetData()">Очистить данные</button>
+</div>
+</section>
+
+<section class="card">
+<h2>6. Расчётные формулы</h2>
+<div id="formulaText" class="note">
+Площадь подошвы: A = L × B.<br>
+Объём бетона: V = L × B × H.<br>
+Собственный вес: G = V × γбетона.<br>
+Среднее давление: p = (N + G) / A.<br>
+Коэффициент использования: η = p / R × 100%.
+</div>
+</section>
+</main>
+<footer>Инженерный калькулятор • Предварительные расчёты • Требуется проверка проектировщиком</footer>
+
+<script>
+const $ = id => document.getElementById(id);
+const number = id => Number($(id).value);
+const fmt = (v,d=2) => Number.isFinite(v) ? v.toLocaleString('ru-RU',{minimumFractionDigits:d,maximumFractionDigits:d}) : '—';
+
+function changeType(){
+ const t=$('type').value;
+ $('stripFields').classList.toggle('hidden',t!=='strip');
+ $('isolatedFields').classList.toggle('hidden',t!=='isolated');
+ $('raftFields').classList.toggle('hidden',t!=='raft');
+ if(t==='strip'){
+  $('loadLabel').textContent='Погонная нагрузка N';
+  $('loadUnit').textContent='кН/м';
+  $('extraUnit').textContent='кН/м';
+  $('loadHelp').textContent='Укажите погонную нагрузку от надземной конструкции. Дополнительная нагрузка учитывается отдельно.';
+ }else if(t==='isolated'){
+  $('loadLabel').textContent='Нагрузка от колонны N';
+  $('loadUnit').textContent='кН';
+  $('extraUnit').textContent='кН';
+  $('loadHelp').textContent='Укажите вертикальную нагрузку от колонны. Дополнительная нагрузка добавляется к ней.';
+ }else{
+  $('loadLabel').textContent='Суммарная нагрузка N';
+  $('loadUnit').textContent='кН';
+  $('extraUnit').textContent='кН';
+  $('loadHelp').textContent='Укажите суммарную нагрузку от здания на плиту без собственного веса рассчитываемой фундаментной плиты.';
+ }
+ calculate();
+}
+
+function calculate(){
+ const t=$('type').value;
+ let A=0,V=0,N=0,extra=0,details='';
+ const gamma=number('gammaConcrete');
+ if(t==='strip'){
+  const L=number('stripL'),B=number('stripB'),H=number('stripH');
+  A=L*B;V=L*B*H;
+  N=(number('load')+number('extra'))*L;
+  details='Ленточный фундамент: Nобщ = (Nпогонная + Nдоп.) × L.';
+ }else if(t==='isolated'){
+  const B=number('isoB'),L=number('isoL'),H=number('isoH');
+  A=B*L;V=A*H;
+  N=number('load')+number('extra');
+  details='Отдельно стоящий фундамент: Nобщ = Nколонны + Nдоп.';
+ }else{
+  const L=number('raftL'),B=number('raftB'),H=number('raftH');
+  A=L*B;V=A*H;
+  N=number('load')+number('extra');
+  details='Плитный фундамент: Nобщ = Nздания + Nдоп.';
+ }
+ const values=[A,V,N,gamma,number('soilR')];
+ const valid=values.every(Number.isFinite)&&values.every(x=>x>=0)&&A>0&&gamma>0;
+ if(!valid){
+  ['area','volume','weight','totalLoad','pressure','utilization','mass'].forEach(id=>$(id).textContent='—');
+  $('bearingStatus').className='status neutral';
+  $('bearingStatus').textContent='Проверьте исходные данные: размеры, нагрузки и удельный вес должны быть корректными.';
+  return;
+ }
+ const G=V*gamma;
+ const total=N+G;
+ const p=total/A;
+ const R=number('soilR');
+ const eta=R>0?p/R*100:Infinity;
+ $('area').textContent=fmt(A);
+ $('volume').textContent=fmt(V);
+ $('weight').textContent=fmt(G);
+ $('totalLoad').textContent=fmt(total);
+ $('pressure').textContent=fmt(p);
+ $('utilization').textContent=Number.isFinite(eta)?fmt(eta,1):'—';
+ $('mass').textContent=fmt(G/9.81/1000);
+ $('classResult').textContent=$('concreteClass').value;
+ if(R<=0){
+  $('bearingStatus').className='status neutral';
+  $('bearingStatus').textContent='Введите положительное расчётное сопротивление грунта R.';
+ }else if(p<=R){
+  $('bearingStatus').className='status good';
+  $('bearingStatus').textContent='Среднее давление не превышает введённое R. Предварительная проверка пройдена: p = '+fmt(p)+' кПа, R = '+fmt(R)+' кПа.';
+ }else{
+  $('bearingStatus').className='status bad';
+  $('bearingStatus').textContent='Среднее давление превышает введённое R. Требуется пересмотр размеров или нагрузок: p = '+fmt(p)+' кПа, R = '+fmt(R)+' кПа.';
+ }
+ const q=number('qSettlement'),E=number('soilE'),H=number('soilH'),beta=number('beta');
+ if(q>=0&&E>0&&H>=0&&beta>=0){
+  const s=beta*q*H/E;
+  $('settlement').textContent=fmt(s,1);
+  $('settlementStatus').className='status neutral';
+  $('settlementStatus').textContent='Упрощённая оценка: s ≈ β × q × H / E = '+fmt(s,1)+' мм. Не является нормативным расчётом осадки.';
+ }else{
+  $('settlement').textContent='—';
+  $('settlementStatus').className='status neutral';
+  $('settlementStatus').textContent='Для оценки осадки введите q ≥ 0, E > 0, H ≥ 0 и β ≥ 0.';
+ }
+ $('formulaText').innerHTML=
+ 'Площадь подошвы: A = '+fmt(A)+' м².<br>'+
+ 'Объём бетона: V = '+fmt(V)+' м³.<br>'+
+ 'Собственный вес: G = V × γбетона = '+fmt(G)+' кН.<br>'+
+ details+'<br>'+
+ 'Полная вертикальная нагрузка: Nобщ = '+fmt(total)+' кН.<br>'+
+ 'Среднее давление: p = Nобщ / A = '+fmt(p)+' кПа.<br>'+
+ 'Коэффициент использования: η = p / R × 100% = '+(Number.isFinite(eta)?fmt(eta,1)+'%':'не определён')+'.';
+}
+
+function getData(){
+ const ids=['project','code','section','axis','author','date','type','gammaConcrete','concreteClass',
+ 'stripL','stripB','stripH','isoB','isoL','isoH','raftL','raftB','raftH',
+ 'load','extra','soilR','qSettlement','soilE','soilH','beta'];
+ const data={};
+ ids.forEach(id=>data[id]=$(id).value);
+ return data;
+}
+function setData(data){
+ Object.keys(data||{}).forEach(id=>{if($(id))$(id).value=data[id]});
+ changeType();
+ calculate();
+}
+function saveData(){
+ try{
+  localStorage.setItem('foundationCalculatorData',JSON.stringify(getData()));
+  alert('Данные проекта сохранены в этом браузере.');
+ }catch(e){alert('Не удалось сохранить данные.');}
+}
+function loadData(){
+ try{
+  const raw=localStorage.getItem('foundationCalculatorData');
+  if(!raw){alert('Сохранённые данные не найдены.');return;}
+  setData(JSON.parse(raw));
+  alert('Данные проекта загружены.');
+ }catch(e){alert('Ошибка загрузки данных.');}
+}
+function resetData(){
+ if(!confirm('Очистить все поля и вернуть начальные значения?'))return;
+ document.querySelectorAll('input').forEach(el=>{
+  if(el.type==='date')el.value='';
+  else if(el.id==='gammaConcrete')el.value='25';
+  else if(el.id==='soilR')el.value='200';
+  else if(el.id==='load')el.value='200';
+  else if(el.id==='qSettlement')el.value='100';
+  else if(el.id==='soilE')el.value='10';
+  else if(el.id==='soilH')el.value='3';
+  else if(el.id==='beta')el.value='0.8';
+  else if(el.id==='stripL')el.value='10';
+  else if(el.id==='stripB')el.value='1.2';
+  else if(el.id==='stripH')el.value='0.8';
+  else if(el.id==='isoB'||el.id==='isoL')el.value='2';
+  else if(el.id==='isoH')el.value='0.8';
+  else if(el.id==='raftL')el.value='20';
+  else if(el.id==='raftB')el.value='10';
+  else if(el.id==='raftH')el.value='0.8';
+  else el.value='';
+ });
+ $('type').value='strip';
+ $('extra').value='0';
+ $('concreteClass').value='B25';
+ changeType();
+}
+function exportExcel(){
+ if(typeof XLSX==='undefined'){alert('Библиотека Excel не загрузилась. Проверьте подключение к интернету.');return;}
+ calculate();
+ const d=getData();
+ const rows=[
+ ['КАЛЬКУЛЯТОР ФУНДАМЕНТОВ','Значение'],
+ ['Объект',d.project],['Шифр',d.code],['Раздел',d.section],['Ось',d.axis],
+ ['Автор',d.author],['Дата',d.date],['Тип фундамента',d.type],
+ ['Класс бетона',d.concreteClass],['Удельный вес бетона, кН/м³',d.gammaConcrete],
+ ['Нагрузка N',d.load],['Дополнительная нагрузка',d.extra],
+ ['Расчётное сопротивление грунта R, кПа',d.soilR],
+ ['Площадь подошвы, м²',$('area').textContent],
+ ['Объём бетона, м³',$('volume').textContent],
+ ['Собственный вес, кН',$('weight').textContent],
+ ['Полная нагрузка, кН',$('totalLoad').textContent],
+ ['Среднее давление, кПа',$('pressure').textContent],
+ ['Использование R, %',$('utilization').textContent],
+ ['Ориентировочная осадка, мм',$('settlement').textContent],
+ ['Модуль деформации E, МПа',d.soilE],
+ ['Толщина сжимаемой толщи, м',d.soilH],
+ ['Коэффициент β',d.beta],
+ ['Примечание','Предварительная оценка. Не заменяет нормативные проверки.']
+ ];
+ const ws=XLSX.utils.aoa_to_sheet(rows);
+ ws['!cols']=[{wch:42},{wch:28}];
+ const wb=XLSX.utils.book_new();
+ XLSX.utils.book_append_sheet(wb,ws,'Расчёт фундамента');
+ XLSX.writeFile(wb,'Расчет_фундамента.xlsx');
+}
+document.querySelectorAll('input,select').forEach(el=>el.addEventListener('input',calculate));
+$('date').value=new Date().toISOString().slice(0,10);
+changeType();
+</script>
+</body>
+</html>
+

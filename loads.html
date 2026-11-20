@@ -200,7 +200,10 @@ function render() {
         <td>${number(item.value)}</td>
         <td>${number(item.gamma)}</td>
         <td>${number(item.value * item.gamma)}</td>
-        <td><button class="delete" data-index="${index}">Удалить</button></td>
+       <td>
+  <button class="secondary" data-action="edit" data-index="${index}">Изменить</button>
+  <button class="delete" data-action="delete" data-index="${index}">Удалить</button>
+</td>
       </tr>
     `).join("");
   }

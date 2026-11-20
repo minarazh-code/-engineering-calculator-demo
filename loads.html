@@ -1,0 +1,275 @@
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Engineering Calculator RK — Loads</title>
+<style>
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #f2f4f7;
+  color: #1e293b;
+}
+header {
+  background: #172b4d;
+  color: white;
+  padding: 24px;
+}
+header h1 { margin: 0 0 8px; font-size: 23px; }
+header p { margin: 0; color: #cbd5e1; }
+main { max-width: 1100px; margin: 28px auto; padding: 0 16px; }
+.panel {
+  background: white;
+  border: 1px solid #dce2ea;
+  border-radius: 10px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+h2 { font-size: 18px; margin: 0 0 16px; }
+label { display: block; font-size: 13px; margin-bottom: 6px; color: #475569; }
+input, select {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 14px;
+}
+.field { margin-bottom: 14px; }
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 14px;
+}
+button {
+  border: 0;
+  border-radius: 6px;
+  padding: 11px 16px;
+  cursor: pointer;
+  font-weight: bold;
+}
+.primary { background: #1765ad; color: white; }
+.secondary { background: #e8edf3; color: #24364b; }
+.delete { background: #fee2e2; color: #991b1b; padding: 7px 10px; }
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; min-width: 680px; }
+th, td {
+  padding: 11px 8px;
+  border-bottom: 1px solid #e2e8f0;
+  text-align: left;
+  font-size: 13px;
+}
+th { background: #f8fafc; color: #475569; }
+.summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 12px;
+}
+.metric {
+  background: #f1f6fb;
+  border-radius: 8px;
+  padding: 16px;
+}
+.metric span { display: block; color: #64748b; font-size: 13px; }
+.metric strong { display: block; margin-top: 8px; font-size: 23px; }
+.note { color: #64748b; font-size: 13px; line-height: 1.5; }
+.status { color: #b42318; font-size: 13px; margin-top: 12px; }
+@media(max-width:600px) {
+  header { padding: 18px; }
+  .panel { padding: 14px; }
+}
+</style>
+</head>
+<body>
+<header>
+  <h1>Engineering Calculator RK</h1>
+  <p>Модуль сбора нагрузок · Версия 1.0</p>
+</header>
+
+<main>
+  <section class="panel">
+    <h2>1. Исходные данные</h2>
+    <div class="grid">
+      <div class="field">
+        <label for="objectName">Наименование объекта</label>
+        <input id="objectName" placeholder="Например, жилой дом">
+      </div>
+      <div class="field">
+        <label for="area">Расчётная площадь, м²</label>
+        <input id="area" type="number" min="0" step="any" placeholder="Введите площадь">
+      </div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>2. Ведомость нагрузок</h2>
+    <div class="grid">
+      <div class="field">
+        <label for="loadName">Наименование нагрузки</label>
+        <input id="loadName" placeholder="Например, собственный вес плиты">
+      </div>
+      <div class="field">
+        <label for="loadType">Вид нагрузки</label>
+        <select id="loadType">
+          <option value="permanent">Постоянная</option>
+          <option value="variable">Временная</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="loadValue">Нормативное значение, кН/м²</label>
+        <input id="loadValue" type="number" min="0" step="any" placeholder="Например, 5.0">
+      </div>
+      <div class="field">
+        <label for="gamma">Коэффициент надёжности γf</label>
+        <input id="gamma" type="number" min="0" step="any" placeholder="Введите коэффициент">
+      </div>
+    </div>
+    <button class="primary" id="addButton">+ Добавить нагрузку</button>
+    <p class="status" id="status" role="status"></p>
+  </section>
+
+  <section class="panel">
+    <h2>3. Список нагрузок</h2>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Наименование</th>
+            <th>Категория</th>
+            <th>qн, кН/м²</th>
+            <th>γf</th>
+            <th>qр, кН/м²</th>
+            <th>Действие</th>
+          </tr>
+        </thead>
+        <tbody id="loadTable">
+          <tr><td colspan="6">Нагрузки пока не добавлены</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>4. Итоги расчёта</h2>
+    <div class="summary">
+      <div class="metric">
+        <span>Постоянные расчётные нагрузки</span>
+        <strong id="permanentTotal">0.00</strong>
+        <span>кН/м²</span>
+      </div>
+      <div class="metric">
+        <span>Временные расчётные нагрузки</span>
+        <strong id="variableTotal">0.00</strong>
+        <span>кН/м²</span>
+      </div>
+      <div class="metric">
+        <span>Общая сумма расчётных нагрузок</span>
+        <strong id="grandTotal">0.00</strong>
+        <span>кН/м²</span>
+      </div>
+    </div>
+    <p class="note" id="areaResult">Площадь не задана.</p>
+  </section>
+
+  <p class="note">
+    Внимание: это инструмент для ручного сбора и арифметического суммирования
+    нагрузок. Он не выполняет автоматический подбор нормативных коэффициентов,
+    сочетаний нагрузок или проверку конструкций. Значения и коэффициенты
+    необходимо принимать по применимым нормам РК и расчётному заданию.
+  </p>
+</main>
+
+<script>
+const loads = [];
+
+const $ = id => document.getElementById(id);
+const number = value => Number(value).toFixed(2);
+
+function render() {
+  const table = $("loadTable");
+
+  if (loads.length === 0) {
+    table.innerHTML = '<tr><td colspan="6">Нагрузки пока не добавлены</td></tr>';
+  } else {
+    table.innerHTML = loads.map((item, index) => `
+      <tr>
+        <td>${escapeHTML(item.name)}</td>
+        <td>${item.type === "permanent" ? "Постоянная" : "Временная"}</td>
+        <td>${number(item.value)}</td>
+        <td>${number(item.gamma)}</td>
+        <td>${number(item.value * item.gamma)}</td>
+        <td><button class="delete" data-index="${index}">Удалить</button></td>
+      </tr>
+    `).join("");
+  }
+
+  const permanent = loads
+    .filter(item => item.type === "permanent")
+    .reduce((sum, item) => sum + item.value * item.gamma, 0);
+
+  const variable = loads
+    .filter(item => item.type === "variable")
+    .reduce((sum, item) => sum + item.value * item.gamma, 0);
+
+  $("permanentTotal").textContent = number(permanent);
+  $("variableTotal").textContent = number(variable);
+  $("grandTotal").textContent = number(permanent + variable);
+
+  const area = Number($("area").value);
+  $("areaResult").textContent =
+    area > 0
+      ? `Заданная площадь: ${number(area)} м².`
+      : "Площадь не задана.";
+}
+
+function escapeHTML(value) {
+  return String(value).replace(/[&<>"']/g, char => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;",
+    '"': "&quot;", "'": "&#39;"
+  })[char]);
+}
+
+$("addButton").addEventListener("click", () => {
+  const name = $("loadName").value.trim();
+  const value = $("loadValue").value;
+  const gamma = $("gamma").value;
+
+  if (!name || value === "" || gamma === "" ||
+      !Number.isFinite(Number(value)) ||
+      !Number.isFinite(Number(gamma)) ||
+      Number(value) < 0 || Number(gamma) <= 0) {
+    $("status").textContent =
+      "Заполните название, нагрузку и коэффициент. Нагрузка должна быть неотрицательной, коэффициент — больше нуля.";
+    return;
+  }
+
+  loads.push({
+    name,
+    type: $("loadType").value,
+    value: Number(value),
+    gamma: Number(gamma)
+  });
+
+  $("loadName").value = "";
+  $("loadValue").value = "";
+  $("gamma").value = "";
+  $("status").textContent = "Нагрузка добавлена.";
+  render();
+});
+
+$("loadTable").addEventListener("click", event => {
+  const button = event.target.closest("button[data-index]");
+  if (!button) return;
+
+  loads.splice(Number(button.dataset.index), 1);
+  $("status").textContent = "Строка удалена.";
+  render();
+});
+
+$("area").addEventListener("input", render);
+render();
+</script>
+</body>
+</html>

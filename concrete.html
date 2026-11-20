@@ -1,1 +1,499 @@
 
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Concrete — калькулятор бетона и опалубки</title>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
+:root {
+  --bg:#f3f5f8; --card:#fff; --text:#202938; --muted:#718096;
+  --primary:#1769aa; --primary2:#0d4f87; --border:#e1e7ef;
+  --green:#16845b; --red:#c0392b; --shadow:0 4px 18px rgba(20,35,55,.06);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:Arial,sans-serif}
+header{background:#172b45;color:white;padding:22px 28px}
+.header-inner{max-width:1400px;margin:auto}
+header h1{margin:0 0 7px;font-size:25px}
+header p{margin:0;color:#cbd5e1;font-size:13px}
+main{max-width:1400px;margin:24px auto;padding:0 18px 45px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:18px;box-shadow:var(--shadow)}
+.card h2{font-size:18px;margin:0 0 17px}
+.card h3{font-size:15px;margin:18px 0 12px}
+.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:13px}
+.field{display:flex;flex-direction:column;gap:6px}
+.field label{font-size:12px;color:var(--muted);font-weight:600}
+input,select,textarea{width:100%;padding:10px 11px;border:1px solid #ccd5e0;border-radius:7px;font-size:14px;background:white;color:var(--text);min-width:0}
+input:focus,select:focus,textarea:focus{outline:2px solid #b9d8f4;border-color:var(--primary)}
+textarea{resize:vertical;min-height:40px}
+.actions{display:flex;flex-wrap:wrap;gap:9px;margin-top:16px}
+button{border:0;border-radius:7px;padding:10px 15px;font-weight:600;font-size:13px;cursor:pointer}
+button.primary{background:var(--primary);color:white}
+button.primary:hover{background:var(--primary2)}
+button.secondary{background:#eaf0f6;color:#29445f}
+button.danger{background:#fff0ee;color:var(--red)}
+button.small{padding:6px 9px;font-size:12px}
+button:disabled{opacity:.5;cursor:not-allowed}
+.hint{font-size:12px;color:var(--muted);line-height:1.5;margin-top:9px}
+.metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.metric{background:#f6f9fc;border:1px solid var(--border);padding:15px;border-radius:9px}
+.metric span{display:block;font-size:12px;color:var(--muted);margin-bottom:8px}
+.metric strong{font-size:23px;display:block}
+.metric small{font-size:11px;color:var(--muted)}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;min-width:760px;font-size:13px}
+th,td{padding:10px 9px;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap}
+th{background:#f5f7fa;color:#536276;font-size:11px;text-transform:uppercase}
+td.num,th.num{text-align:right}
+.empty{text-align:center;color:var(--muted);padding:28px}
+.tag{display:inline-block;padding:4px 7px;border-radius:5px;background:#eaf2fa;color:#245a88;font-size:11px}
+.section-note{background:#f5f8fb;border-left:3px solid var(--primary);padding:11px 13px;font-size:12px;color:#526174;line-height:1.5;margin-top:12px}
+.footer-note{font-size:11px;color:var(--muted);line-height:1.6;margin-top:16px}
+@media(max-width:900px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.metrics{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:560px){header{padding:18px}.grid,.metrics{grid-template-columns:1fr}main{padding:0 10px}.card{padding:15px}}
+@media print{
+  body{background:white}
+  header{background:white;color:#172b45;padding:8px 0}
+  header p{color:#555}
+  main{max-width:none;margin:0;padding:0}
+  .card{box-shadow:none;break-inside:avoid;padding:12px;margin-bottom:10px}
+  .no-print,button{display:none!important}
+  .table-wrap{overflow:visible}
+  table{min-width:0;font-size:9px}
+  th,td{padding:5px}
+  .metric strong{font-size:17px}
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="header-inner">
+    <h1>CONCRETE — калькулятор бетона и опалубки</h1>
+    <p>Инженерный расчёт объёмов монолитных конструкций · Ведомость материалов</p>
+  </div>
+</header>
+
+<main>
+  <section class="card">
+    <h2>1. Данные проекта</h2>
+    <div class="grid">
+      <div class="field"><label>Наименование объекта</label><input id="projectName" placeholder="Например, жилой дом"></div>
+      <div class="field"><label>Адрес / местоположение</label><input id="projectAddress" placeholder="Город, адрес"></div>
+      <div class="field"><label>Шифр проекта</label><input id="projectCode" placeholder="Например, 25-АР"></div>
+      <div class="field"><label>Стадия</label><select id="projectStage"><option>РП</option><option>П</option><option>ЭП</option><option>Рабочая документация</option></select></div>
+      <div class="field"><label>Раздел</label><input id="projectSection" value="КЖ"></div>
+      <div class="field"><label>Лист</label><input id="projectSheet" placeholder="КЖ-1"></div>
+      <div class="field"><label>Разработал</label><input id="projectAuthor"></div>
+      <div class="field"><label>Дата</label><input id="projectDate" type="date"></div>
+    </div>
+    <div class="actions no-print">
+      <button class="secondary" onclick="saveProject()">Сохранить проект</button>
+      <button class="secondary" onclick="loadProject()">Загрузить проект</button>
+      <button class="secondary" onclick="clearProject()">Очистить данные проекта</button>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>2. Добавление конструкции</h2>
+    <div class="grid">
+      <div class="field">
+        <label>Тип конструкции</label>
+        <select id="type" onchange="updateFields()">
+          <option value="slab">Монолитная плита / перекрытие</option>
+          <option value="strip">Ленточный фундамент</option>
+          <option value="footing">Отдельный фундамент</option>
+          <option value="column">Колонна</option>
+          <option value="beam">Балка / ригель</option>
+          <option value="wall">Монолитная стена</option>
+          <option value="blinding">Подбетонка</option>
+          <option value="custom">Произвольный прямоугольный элемент</option>
+        </select>
+      </div>
+      <div class="field"><label>Марка конструкции</label><input id="mark" placeholder="Например, Фм-1, Пм-1"></div>
+      <div class="field"><label>Оси / расположение</label><input id="axes" placeholder="Например, А-Б / 1-3"></div>
+      <div class="field"><label>Класс бетона</label>
+        <select id="concreteClass">
+          <option>В15</option><option>В20</option><option selected>В25</option>
+          <option>В30</option><option>В35</option><option>В40</option>
+          <option>В7,5</option><option>В10</option><option>Другое</option>
+        </select>
+      </div>
+    </div>
+
+    <h3>Геометрические размеры</h3>
+    <div class="grid">
+      <div class="field"><label id="labelA">Длина L, м</label><input id="dimA" type="number" min="0" step="0.001" value="6"></div>
+      <div class="field"><label id="labelB">Ширина B, м</label><input id="dimB" type="number" min="0" step="0.001" value="4"></div>
+      <div class="field"><label id="labelH">Толщина / высота H, м</label><input id="dimH" type="number" min="0" step="0.001" value="0.2"></div>
+      <div class="field"><label>Количество одинаковых элементов, шт.</label><input id="quantity" type="number" min="1" step="1" value="1"></div>
+    </div>
+
+    <h3>Дополнительные параметры</h3>
+    <div class="grid">
+      <div class="field"><label>Запас бетона, %</label><input id="waste" type="number" min="0" step="0.5" value="3"></div>
+      <div class="field"><label>Примечание</label><input id="note" placeholder="Дополнительная информация"></div>
+    </div>
+    <div class="section-note" id="formulaInfo">
+      Плита: объём = длина × ширина × толщина. Опалубка учитывает нижнюю поверхность и боковые торцы.
+    </div>
+    <div class="actions no-print">
+      <button class="primary" onclick="addElement()">Добавить в ведомость</button>
+      <button class="secondary" onclick="previewElement()">Рассчитать предварительно</button>
+      <button class="secondary" onclick="resetForm()">Очистить форму</button>
+    </div>
+    <div id="preview" class="hint"></div>
+  </section>
+
+  <section class="card">
+    <h2>3. Итоговые показатели</h2>
+    <div class="metrics">
+      <div class="metric"><span>Общий объём бетона без запаса</span><strong id="totalNet">0,000</strong><small>м³</small></div>
+      <div class="metric"><span>Объём бетона с запасом</span><strong id="totalGross">0,000</strong><small>м³</small></div>
+      <div class="metric"><span>Общая площадь опалубки</span><strong id="totalForm">0,00</strong><small>м²</small></div>
+      <div class="metric"><span>Количество конструкций</span><strong id="totalCount">0</strong><small>шт.</small></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>4. Ведомость объёмов бетона и опалубки</h2>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>№</th><th>Тип конструкции</th><th>Марка</th><th>Оси</th>
+            <th>Бетон</th><th class="num">Кол-во</th>
+            <th class="num">Объём, м³</th><th class="num">С запасом, м³</th>
+            <th class="num">Опалубка, м²</th><th class="no-print">Действие</th>
+          </tr>
+        </thead>
+        <tbody id="elementsBody"><tr><td colspan="10" class="empty">Добавьте первую конструкцию</td></tr></tbody>
+      </table>
+    </div>
+    <div class="actions no-print">
+      <button class="secondary" onclick="exportExcel()">Экспорт в Excel</button>
+      <button class="secondary" onclick="window.print()">Печать / PDF</button>
+      <button class="secondary" onclick="saveCalculation()">Сохранить расчёт</button>
+      <button class="secondary" onclick="loadCalculation()">Загрузить расчёт</button>
+      <button class="danger" onclick="clearAll()">Удалить все конструкции</button>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>5. Сводка по классам бетона</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Класс бетона</th><th class="num">Количество конструкций</th><th class="num">Объём без запаса, м³</th><th class="num">Объём с запасом, м³</th></tr></thead>
+        <tbody id="classBody"><tr><td colspan="4" class="empty">Нет данных</td></tr></tbody>
+      </table>
+    </div>
+    <p class="footer-note">
+      Примечание: расчёт выполняется по заданным геометрическим размерам идеализированных прямоугольных элементов.
+      Не учитываются автоматически проёмы, ниши, скосы, закладные детали, сопряжения и пересечения конструкций.
+      При пересечении элементов необходимо исключать двойной учёт объёмов.
+      Площадь опалубки является предварительной геометрической оценкой и зависит от принятой схемы производства работ.
+      Для подбетонки опалубка по умолчанию не учитывается. Перед выпуском рабочей документации проверьте исходные размеры и принятый способ бетонирования.
+    </p>
+  </section>
+</main>
+
+<script>
+const STORAGE_PROJECT = "concrete_project_v1";
+const STORAGE_CALC = "concrete_calculation_v1";
+let elements = [];
+let editingId = null;
+
+const typeNames = {
+  slab:"Монолитная плита / перекрытие",
+  strip:"Ленточный фундамент",
+  footing:"Отдельный фундамент",
+  column:"Колонна",
+  beam:"Балка / ригель",
+  wall:"Монолитная стена",
+  blinding:"Подбетонка",
+  custom:"Произвольный прямоугольный элемент"
+};
+
+const fieldSettings = {
+  slab:{
+    a:"Длина плиты L, м",b:"Ширина плиты B, м",h:"Толщина плиты H, м",
+    info:"Объём = L × B × H. Опалубка включает нижнюю поверхность и боковые торцы плиты."
+  },
+  strip:{
+    a:"Длина ленты L, м",b:"Ширина ленты B, м",h:"Высота ленты H, м",
+    info:"Объём = L × B × H. Опалубка включает две боковые поверхности. Дно и верх не учитываются."
+  },
+  footing:{
+    a:"Длина фундамента L, м",b:"Ширина фундамента B, м",h:"Высота фундамента H, м",
+    info:"Объём = L × B × H. Опалубка включает четыре боковые поверхности. Подошва и верх не учитываются."
+  },
+  column:{
+    a:"Сечение колонны A, м",b:"Сечение колонны B, м",h:"Высота колонны H, м",
+    info:"Объём = A × B × H. Опалубка включает четыре боковые грани колонны."
+  },
+  beam:{
+    a:"Длина балки L, м",b:"Ширина балки B, м",h:"Высота балки H, м",
+    info:"Объём = L × B × H. Опалубка включает две боковые стороны и нижнюю поверхность балки."
+  },
+  wall:{
+    a:"Длина стены L, м",b:"Толщина стены B, м",h:"Высота стены H, м",
+    info:"Объём = L × B × H. Опалубка включает две стороны стены и два торца. Проёмы необходимо учитывать отдельно."
+  },
+  blinding:{
+    a:"Длина подбетонки L, м",b:"Ширина подбетонки B, м",h:"Толщина подбетонки H, м",
+    info:"Объём = L × B × H. Опалубка не учитывается, если бетон укладывается в подготовленное основание."
+  },
+  custom:{
+    a:"Длина L, м",b:"Ширина B, м",h:"Высота / толщина H, м",
+    info:"Объём = L × B × H. Опалубка рассчитывается как для четырёх боковых граней прямоугольного элемента."
+  }
+};
+
+function updateFields(){
+  const type = document.getElementById("type").value;
+  const s = fieldSettings[type];
+  document.getElementById("labelA").textContent=s.a;
+  document.getElementById("labelB").textContent=s.b;
+  document.getElementById("labelH").textContent=s.h;
+  document.getElementById("formulaInfo").textContent=s.info;
+  if(type==="slab"){setDims(6,4,0.2);}
+  else if(type==="strip"){setDims(10,0.6,0.8);}
+  else if(type==="footing"){setDims(2,2,0.6);}
+  else if(type==="column"){setDims(0.4,0.4,3);}
+  else if(type==="beam"){setDims(6,0.3,0.6);}
+  else if(type==="wall"){setDims(6,0.2,3);}
+  else if(type==="blinding"){setDims(6,4,0.1);}
+  else{setDims(1,1,1);}
+  document.getElementById("preview").textContent="";
+}
+function setDims(a,b,h){
+  document.getElementById("dimA").value=a;
+  document.getElementById("dimB").value=b;
+  document.getElementById("dimH").value=h;
+}
+function getFormData(){
+  const type=document.getElementById("type").value;
+  const a=Number(document.getElementById("dimA").value);
+  const b=Number(document.getElementById("dimB").value);
+  const h=Number(document.getElementById("dimH").value);
+  const quantity=Number(document.getElementById("quantity").value);
+  const waste=Number(document.getElementById("waste").value);
+  if(![a,b,h,quantity,waste].every(Number.isFinite) || a<=0 || b<=0 || h<=0 || quantity<1 || !Number.isInteger(quantity) || waste<0){
+    alert("Проверьте размеры, количество и процент запаса. Все размеры должны быть больше нуля.");
+    return null;
+  }
+  const singleVolume=a*b*h;
+  let singleForm=0;
+  switch(type){
+    case "slab": singleForm=a*b+2*a*h+2*b*h; break;
+    case "strip": singleForm=2*a*h; break;
+    case "footing": singleForm=2*(a+b)*h; break;
+    case "column": singleForm=2*(a+b)*h; break;
+    case "beam": singleForm=(b+2*h)*a; break;
+    case "wall": singleForm=2*a*h+2*b*h; break;
+    case "blinding": singleForm=0; break;
+    case "custom": singleForm=2*(a*b+a*h+b*h); break;
+  }
+  const net=singleVolume*quantity;
+  const gross=net*(1+waste/100);
+  const form=singleForm*quantity;
+  return {
+    id:editingId || (Date.now()+"_"+Math.random().toString(16).slice(2)),
+    type,typeName:typeNames[type],
+    mark:document.getElementById("mark").value.trim(),
+    axes:document.getElementById("axes").value.trim(),
+    concreteClass:document.getElementById("concreteClass").value,
+    a,b,h,quantity,waste,
+    note:document.getElementById("note").value.trim(),
+    singleVolume,singleForm,net,gross,form
+  };
+}
+function previewElement(){
+  const x=getFormData();
+  if(!x)return;
+  document.getElementById("preview").innerHTML=
+    "Объём без запаса: <b>"+fmt(x.net)+" м³</b> · С запасом: <b>"+fmt(x.gross)+" м³</b> · Опалубка: <b>"+fmt(x.form,2)+" м²</b>";
+}
+function addElement(){
+  const x=getFormData();
+  if(!x)return;
+  if(editingId){
+    elements=elements.map(e=>e.id===editingId?x:e);
+    editingId=null;
+  }else{
+    elements.push(x);
+  }
+  render();
+  resetForm();
+}
+function editElement(id){
+  const x=elements.find(e=>e.id===id);
+  if(!x)return;
+  editingId=id;
+  document.getElementById("type").value=x.type;
+  document.getElementById("mark").value=x.mark;
+  document.getElementById("axes").value=x.axes;
+  document.getElementById("concreteClass").value=x.concreteClass;
+  document.getElementById("dimA").value=x.a;
+  document.getElementById("dimB").value=x.b;
+  document.getElementById("dimH").value=x.h;
+  document.getElementById("quantity").value=x.quantity;
+  document.getElementById("waste").value=x.waste;
+  document.getElementById("note").value=x.note;
+  updateLabelsOnly();
+  document.querySelector(".card").scrollIntoView({behavior:"smooth"});
+  document.querySelector('button.primary').textContent="Сохранить изменения";
+}
+function updateLabelsOnly(){
+  const s=fieldSettings[document.getElementById("type").value];
+  document.getElementById("labelA").textContent=s.a;
+  document.getElementById("labelB").textContent=s.b;
+  document.getElementById("labelH").textContent=s.h;
+  document.getElementById("formulaInfo").textContent=s.info;
+}
+function deleteElement(id){
+  if(!confirm("Удалить эту конструкцию из ведомости?"))return;
+  elements=elements.filter(e=>e.id!==id);
+  render();
+}
+function resetForm(){
+  editingId=null;
+  document.getElementById("type").value="slab";
+  document.getElementById("mark").value="";
+  document.getElementById("axes").value="";
+  document.getElementById("concreteClass").value="В25";
+  document.getElementById("quantity").value=1;
+  document.getElementById("waste").value=3;
+  document.getElementById("note").value="";
+  updateFields();
+  document.querySelector('button.primary').textContent="Добавить в ведомость";
+}
+function fmt(n,d=3){
+  return Number(n).toLocaleString("ru-RU",{minimumFractionDigits:d,maximumFractionDigits:d});
+}
+function safe(s){
+  return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+}
+function render(){
+  const body=document.getElementById("elementsBody");
+  if(!elements.length){
+    body.innerHTML='<tr><td colspan="10" class="empty">Добавьте первую конструкцию</td></tr>';
+  }else{
+    body.innerHTML=elements.map((e,i)=>`
+      <tr>
+        <td>${i+1}</td>
+        <td>${safe(e.typeName)}</td>
+        <td>${safe(e.mark||"—")}</td>
+        <td>${safe(e.axes||"—")}</td>
+        <td><span class="tag">${safe(e.concreteClass)}</span></td>
+        <td class="num">${e.quantity}</td>
+        <td class="num">${fmt(e.net)}</td>
+        <td class="num">${fmt(e.gross)}</td>
+        <td class="num">${fmt(e.form,2)}</td>
+        <td class="no-print">
+          <button class="small secondary" onclick="editElement('${e.id}')">Изменить</button>
+          <button class="small danger" onclick="deleteElement('${e.id}')">Удалить</button>
+        </td>
+      </tr>`).join("");
+  }
+  const net=elements.reduce((s,e)=>s+e.net,0);
+  const gross=elements.reduce((s,e)=>s+e.gross,0);
+  const form=elements.reduce((s,e)=>s+e.form,0);
+  const count=elements.reduce((s,e)=>s+e.quantity,0);
+  document.getElementById("totalNet").textContent=fmt(net);
+  document.getElementById("totalGross").textContent=fmt(gross);
+  document.getElementById("totalForm").textContent=fmt(form,2);
+  document.getElementById("totalCount").textContent=count;
+  renderClasses();
+}
+function renderClasses(){
+  const map={};
+  elements.forEach(e=>{
+    if(!map[e.concreteClass])map[e.concreteClass]={count:0,net:0,gross:0};
+    map[e.concreteClass].count+=e.quantity;
+    map[e.concreteClass].net+=e.net;
+    map[e.concreteClass].gross+=e.gross;
+  });
+  const rows=Object.entries(map);
+  document.getElementById("classBody").innerHTML=rows.length?
+    rows.map(([name,v])=>`<tr><td>${safe(name)}</td><td class="num">${v.count}</td><td class="num">${fmt(v.net)}</td><td class="num">${fmt(v.gross)}</td></tr>`).join("") :
+    '<tr><td colspan="4" class="empty">Нет данных</td></tr>';
+}
+function projectData(){
+  const ids=["projectName","projectAddress","projectCode","projectStage","projectSection","projectSheet","projectAuthor","projectDate"];
+  return Object.fromEntries(ids.map(id=>[id,document.getElementById(id).value]));
+}
+function saveProject(){
+  localStorage.setItem(STORAGE_PROJECT,JSON.stringify(projectData()));
+  alert("Данные проекта сохранены в этом браузере.");
+}
+function loadProject(){
+  const data=localStorage.getItem(STORAGE_PROJECT);
+  if(!data){alert("Сохранённые данные проекта не найдены.");return;}
+  const p=JSON.parse(data);
+  Object.keys(p).forEach(id=>{if(document.getElementById(id))document.getElementById(id).value=p[id]});
+  alert("Данные проекта загружены.");
+}
+function clearProject(){
+  if(!confirm("Очистить поля данных проекта?"))return;
+  ["projectName","projectAddress","projectCode","projectSheet","projectAuthor"].forEach(id=>document.getElementById(id).value="");
+  document.getElementById("projectStage").value="РП";
+  document.getElementById("projectSection").value="КЖ";
+  document.getElementById("projectDate").value="";
+}
+function saveCalculation(){
+  localStorage.setItem(STORAGE_CALC,JSON.stringify(elements));
+  alert("Расчёт сохранён в этом браузере.");
+}
+function loadCalculation(){
+  const data=localStorage.getItem(STORAGE_CALC);
+  if(!data){alert("Сохранённый расчёт не найден.");return;}
+  try{elements=JSON.parse(data);render();alert("Расчёт загружен.");}
+  catch(e){alert("Не удалось прочитать сохранённый расчёт.");}
+}
+function clearAll(){
+  if(!confirm("Удалить все конструкции из текущей ведомости?"))return;
+  elements=[];
+  editingId=null;
+  render();
+}
+function exportExcel(){
+  if(!elements.length){alert("Сначала добавьте конструкции в ведомость.");return;}
+  if(typeof XLSX==="undefined"){alert("Не загрузилась библиотека Excel. Проверьте подключение к интернету и обновите страницу.");return;}
+  const p=projectData();
+  const projectRows=Object.entries(p).map(([k,v])=>({Параметр:k,Значение:v}));
+  const data=elements.map((e,i)=>({
+    "№":i+1,"Тип конструкции":e.typeName,"Марка":e.mark,"Оси":e.axes,
+    "Класс бетона":e.concreteClass,"Длина / размер A, м":e.a,
+    "Ширина / размер B, м":e.b,"Высота / толщина H, м":e.h,
+    "Количество, шт.":e.quantity,"Запас, %":e.waste,
+    "Объём без запаса, м³":Number(e.net.toFixed(4)),
+    "Объём с запасом, м³":Number(e.gross.toFixed(4)),
+    "Опалубка, м²":Number(e.form.toFixed(3)),"Примечание":e.note
+  }));
+  const summary={};
+  elements.forEach(e=>{
+    if(!summary[e.concreteClass])summary[e.concreteClass]={count:0,net:0,gross:0};
+    summary[e.concreteClass].count+=e.quantity;
+    summary[e.concreteClass].net+=e.net;
+    summary[e.concreteClass].gross+=e.gross;
+  });
+  const summaryRows=Object.entries(summary).map(([name,v])=>({
+    "Класс бетона":name,"Количество конструкций, шт.":v.count,
+    "Объём без запаса, м³":Number(v.net.toFixed(4)),
+    "Объём с запасом, м³":Number(v.gross.toFixed(4))
+  }));
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(data),"Ведомость");
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(summaryRows),"По классам бетона");
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(projectRows),"Данные проекта");
+  XLSX.writeFile(wb,"Concrete_ведомость.xlsx");
+}
+document.getElementById("projectDate").value=new Date().toISOString().slice(0,10);
+updateFields();
+render();
+</script>
+</body>
+</html>
+

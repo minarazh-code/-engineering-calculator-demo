@@ -5,22 +5,41 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Engineering Calculator RK — Loads</title>
+
 <style>
-* { box-sizing: border-box; }
+* {
+  box-sizing: border-box;
+}
+
 body {
   margin: 0;
   font-family: Arial, sans-serif;
   background: #f2f4f7;
   color: #1e293b;
 }
+
 header {
   background: #172b4d;
   color: white;
   padding: 24px;
 }
-header h1 { margin: 0 0 8px; font-size: 23px; }
-header p { margin: 0; color: #cbd5e1; }
-main { max-width: 1100px; margin: 28px auto; padding: 0 16px; }
+
+header h1 {
+  margin: 0 0 8px;
+  font-size: 24px;
+}
+
+header p {
+  margin: 0;
+  color: #cbd5e1;
+}
+
+main {
+  max-width: 1150px;
+  margin: 28px auto;
+  padding: 0 16px;
+}
+
 .panel {
   background: white;
   border: 1px solid #dce2ea;
@@ -28,197 +47,371 @@ main { max-width: 1100px; margin: 28px auto; padding: 0 16px; }
   padding: 20px;
   margin-bottom: 20px;
 }
-h2 { font-size: 18px; margin: 0 0 16px; }
-label { display: block; font-size: 13px; margin-bottom: 6px; color: #475569; }
+
+h2 {
+  font-size: 18px;
+  margin: 0 0 18px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 14px;
+}
+
+.field {
+  margin-bottom: 14px;
+}
+
+label {
+  display: block;
+  font-size: 13px;
+  margin-bottom: 6px;
+  color: #475569;
+}
+
 input, select {
   width: 100%;
-  padding: 10px;
+  padding: 11px;
   border: 1px solid #cbd5e1;
   border-radius: 6px;
   font-size: 14px;
 }
-.field { margin-bottom: 14px; }
-.grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 14px;
+
+input:focus, select:focus {
+  outline: 2px solid #93c5fd;
+  border-color: #1765ad;
 }
+
 button {
   border: 0;
   border-radius: 6px;
-  padding: 11px 16px;
+  padding: 10px 14px;
   cursor: pointer;
   font-weight: bold;
+  margin: 3px;
 }
-.primary { background: #1765ad; color: white; }
-.secondary { background: #e8edf3; color: #24364b; }
-.delete { background: #fee2e2; color: #991b1b; padding: 7px 10px; }
-.table-wrap { overflow-x: auto; }
-table { width: 100%; border-collapse: collapse; min-width: 680px; }
+
+.primary {
+  background: #1765ad;
+  color: white;
+}
+
+.secondary {
+  background: #e8edf3;
+  color: #24364b;
+}
+
+.delete {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+button:hover {
+  opacity: 0.88;
+}
+
+.table-wrap {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 760px;
+}
+
 th, td {
-  padding: 11px 8px;
+  padding: 12px 9px;
   border-bottom: 1px solid #e2e8f0;
   text-align: left;
   font-size: 13px;
 }
-th { background: #f8fafc; color: #475569; }
+
+th {
+  background: #f8fafc;
+  color: #475569;
+}
+
 .summary {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
   gap: 12px;
 }
+
 .metric {
   background: #f1f6fb;
   border-radius: 8px;
   padding: 16px;
 }
-.metric span { display: block; color: #64748b; font-size: 13px; }
-.metric strong { display: block; margin-top: 8px; font-size: 23px; }
-.note { color: #64748b; font-size: 13px; line-height: 1.5; }
-.status { color: #b42318; font-size: 13px; margin-top: 12px; }
-@media(max-width:600px) {
-  header { padding: 18px; }
-  .panel { padding: 14px; }
+
+.metric span {
+  display: block;
+  color: #64748b;
+  font-size: 13px;
+}
+
+.metric strong {
+  display: block;
+  margin-top: 8px;
+  font-size: 24px;
+}
+
+.status {
+  font-size: 13px;
+  margin-top: 12px;
+  color: #1765ad;
+}
+
+.note {
+  color: #64748b;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+@media(max-width: 600px) {
+  header {
+    padding: 18px;
+  }
+
+  .panel {
+    padding: 14px;
+  }
 }
 </style>
 </head>
+
 <body>
+
 <header>
   <h1>Engineering Calculator RK</h1>
-  <p>Модуль сбора нагрузок · Версия 1.0</p>
+  <p>Модуль сбора нагрузок · Версия 1.1</p>
 </header>
 
 <main>
-  <section class="panel">
-    <h2>1. Исходные данные</h2>
-    <div class="grid">
-      <div class="field">
-        <label for="objectName">Наименование объекта</label>
-        <input id="objectName" placeholder="Например, жилой дом">
-      </div>
-      <div class="field">
-        <label for="area">Расчётная площадь, м²</label>
-        <input id="area" type="number" min="0" step="any" placeholder="Введите площадь">
-      </div>
-    </div>
-  </section>
 
-  <section class="panel">
-    <h2>2. Ведомость нагрузок</h2>
-    <div class="grid">
-      <div class="field">
-        <label for="loadName">Наименование нагрузки</label>
-        <input id="loadName" placeholder="Например, собственный вес плиты">
-      </div>
-      <div class="field">
-        <label for="loadType">Вид нагрузки</label>
-        <select id="loadType">
-          <option value="permanent">Постоянная</option>
-          <option value="variable">Временная</option>
-        </select>
-      </div>
-      <div class="field">
-        <label for="loadValue">Нормативное значение, кН/м²</label>
-        <input id="loadValue" type="number" min="0" step="any" placeholder="Например, 5.0">
-      </div>
-      <div class="field">
-        <label for="gamma">Коэффициент надёжности γf</label>
-        <input id="gamma" type="number" min="0" step="any" placeholder="Введите коэффициент">
-      </div>
-    </div>
-    <button class="primary" id="addButton">+ Добавить нагрузку</button>
-    <p class="status" id="status" role="status"></p>
-  </section>
+<section class="panel">
+  <h2>1. Исходные данные</h2>
 
-  <section class="panel">
-    <h2>3. Список нагрузок</h2>
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>Наименование</th>
-            <th>Категория</th>
-            <th>qн, кН/м²</th>
-            <th>γf</th>
-            <th>qр, кН/м²</th>
-            <th>Действие</th>
-          </tr>
-        </thead>
-        <tbody id="loadTable">
-          <tr><td colspan="6">Нагрузки пока не добавлены</td></tr>
-        </tbody>
-      </table>
+  <div class="grid">
+    <div class="field">
+      <label for="objectName">Наименование объекта</label>
+      <input id="objectName" placeholder="Например, жилой дом">
     </div>
-  </section>
 
-  <section class="panel">
-    <h2>4. Итоги расчёта</h2>
-    <div class="summary">
-      <div class="metric">
-        <span>Постоянные расчётные нагрузки</span>
-        <strong id="permanentTotal">0.00</strong>
-        <span>кН/м²</span>
-      </div>
-      <div class="metric">
-        <span>Временные расчётные нагрузки</span>
-        <strong id="variableTotal">0.00</strong>
-        <span>кН/м²</span>
-      </div>
-      <div class="metric">
-        <span>Общая сумма расчётных нагрузок</span>
-        <strong id="grandTotal">0.00</strong>
-        <span>кН/м²</span>
-      </div>
+    <div class="field">
+      <label for="area">Расчётная площадь, м²</label>
+      <input id="area" type="number" min="0" step="any"
+             placeholder="Введите площадь">
     </div>
-    <p class="note" id="areaResult">Площадь не задана.</p>
-  </section>
+  </div>
+</section>
 
-  <p class="note">
-    Внимание: это инструмент для ручного сбора и арифметического суммирования
-    нагрузок. Он не выполняет автоматический подбор нормативных коэффициентов,
-    сочетаний нагрузок или проверку конструкций. Значения и коэффициенты
-    необходимо принимать по применимым нормам РК и расчётному заданию.
-  </p>
+<section class="panel">
+  <h2>2. Ведомость нагрузок</h2>
+
+  <div class="grid">
+
+    <div class="field">
+      <label for="loadName">Наименование нагрузки</label>
+      <input id="loadName"
+             placeholder="Например, собственный вес плиты">
+    </div>
+
+    <div class="field">
+      <label for="loadType">Вид нагрузки</label>
+      <select id="loadType">
+        <option value="permanent">Постоянная</option>
+        <option value="variable">Временная</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label for="loadValue">Нормативное значение, кН/м²</label>
+      <input id="loadValue" type="number" min="0" step="any"
+             placeholder="Например, 5.0">
+    </div>
+
+    <div class="field">
+      <label for="gamma">Коэффициент надёжности γf</label>
+      <input id="gamma" type="number" min="0" step="any"
+             placeholder="Введите коэффициент">
+    </div>
+
+  </div>
+
+  <button class="primary" id="addButton" type="button">
+    + Добавить нагрузку
+  </button>
+
+  <button class="secondary" id="cancelButton"
+          type="button" hidden>
+    Отменить редактирование
+  </button>
+
+  <p class="status" id="status" role="status"></p>
+</section>
+
+<section class="panel">
+  <h2>3. Список нагрузок</h2>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Наименование</th>
+          <th>Категория</th>
+          <th>qн, кН/м²</th>
+          <th>γf</th>
+          <th>qр, кН/м²</th>
+          <th>Действие</th>
+        </tr>
+      </thead>
+
+      <tbody id="loadTable">
+        <tr>
+          <td colspan="6">Нагрузки пока не добавлены</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="panel">
+  <h2>4. Итоги расчёта</h2>
+
+  <div class="summary">
+
+    <div class="metric">
+      <span>Постоянные расчётные нагрузки</span>
+      <strong id="permanentTotal">0.00</strong>
+      <span>кН/м²</span>
+    </div>
+
+    <div class="metric">
+      <span>Временные расчётные нагрузки</span>
+      <strong id="variableTotal">0.00</strong>
+      <span>кН/м²</span>
+    </div>
+
+    <div class="metric">
+      <span>Общая сумма расчётных нагрузок</span>
+      <strong id="grandTotal">0.00</strong>
+      <span>кН/м²</span>
+    </div>
+
+    <div class="metric">
+      <span>Полная расчётная сила на площадь</span>
+      <strong id="totalForce">0.00</strong>
+      <span>кН</span>
+    </div>
+
+  </div>
+
+  <p class="note" id="areaResult">Площадь не задана.</p>
+</section>
+
+<p class="note">
+  Внимание: калькулятор выполняет ручной сбор и арифметическое
+  суммирование нагрузок. Он не выполняет автоматический подбор
+  нормативных коэффициентов, сочетаний нагрузок или проверку
+  конструкций. Значения и коэффициенты необходимо принимать
+  по применимым нормам РК и расчётному заданию.
+</p>
+
 </main>
 
 <script>
+"use strict";
 
 const loads = [];
+let editingIndex = null;
 
 const $ = id => document.getElementById(id);
-const number = value => Number(value).toFixed(2);
 
-function escapeHTML(value) {
-  return String(value).replace(/[&<>"']/g, char => ({
-    "&": "&amp;",
-    "<": "&lt;",
-    ">": "&gt;",
-    '"': "&quot;",
-    "'": "&#39;"
-  })[char]);
+function number(value) {
+  return Number(value).toFixed(2);
+}
+
+function showStatus(message) {
+  $("status").textContent = message;
+}
+
+function resetForm() {
+  $("loadName").value = "";
+  $("loadValue").value = "";
+  $("gamma").value = "";
+  $("loadType").value = "permanent";
+
+  editingIndex = null;
+
+  $("addButton").textContent = "+ Добавить нагрузку";
+  $("cancelButton").hidden = true;
 }
 
 function render() {
   const table = $("loadTable");
+  table.replaceChildren();
 
   if (loads.length === 0) {
-    table.innerHTML =
-      '<tr><td colspan="6">Нагрузки пока не добавлены</td></tr>';
-  } else {
-    table.innerHTML = loads.map((item, index) => `
-      <tr>
-        <td>${escapeHTML(item.name)}</td>
-        <td>${item.type === "permanent" ? "Постоянная" : "Временная"}</td>
-        <td>${number(item.value)}</td>
-        <td>${number(item.gamma)}</td>
-        <td>${number(item.value * item.gamma)}</td>
-        <td>
-          <button class="secondary" data-action="edit" data-index="${index}">Изменить</button>
-          <button class="delete" data-action="delete" data-index="${index}">Удалить</button>
-        </td>
-      </tr>
-    `).join("");
+    const row = document.createElement("tr");
+    const cell = document.createElement("td");
+
+    cell.colSpan = 6;
+    cell.textContent = "Нагрузки пока не добавлены";
+
+    row.appendChild(cell);
+    table.appendChild(row);
   }
+
+  loads.forEach((item, index) => {
+    const row = document.createElement("tr");
+
+    const nameCell = document.createElement("td");
+    nameCell.textContent = item.name;
+
+    const typeCell = document.createElement("td");
+    typeCell.textContent =
+      item.type === "permanent" ? "Постоянная" : "Временная";
+
+    const valueCell = document.createElement("td");
+    valueCell.textContent = number(item.value);
+
+    const gammaCell = document.createElement("td");
+    gammaCell.textContent = number(item.gamma);
+
+    const designCell = document.createElement("td");
+    designCell.textContent = number(item.value * item.gamma);
+
+    const actionCell = document.createElement("td");
+
+    const editButton = document.createElement("button");
+    editButton.className = "secondary";
+    editButton.textContent = "Изменить";
+    editButton.type = "button";
+    editButton.dataset.action = "edit";
+    editButton.dataset.index = index;
+
+    const deleteButton = document.createElement("button");
+    deleteButton.className = "delete";
+    deleteButton.textContent = "Удалить";
+    deleteButton.type = "button";
+    deleteButton.dataset.action = "delete";
+    deleteButton.dataset.index = index;
+
+    actionCell.append(editButton, deleteButton);
+
+    row.append(
+      nameCell,
+      typeCell,
+      valueCell,
+      gammaCell,
+      designCell,
+      actionCell
+    );
+
+    table.appendChild(row);
+  });
 
   const permanent = loads
     .filter(item => item.type === "permanent")
@@ -228,85 +421,118 @@ function render() {
     .filter(item => item.type === "variable")
     .reduce((sum, item) => sum + item.value * item.gamma, 0);
 
+  const total = permanent + variable;
+
   $("permanentTotal").textContent = number(permanent);
   $("variableTotal").textContent = number(variable);
-  $("grandTotal").textContent = number(permanent + variable);
+  $("grandTotal").textContent = number(total);
 
   const area = Number($("area").value);
-  $("areaResult").textContent = area > 0
-    ? `Заданная площадь: ${number(area)} м².`
-    : "Площадь не задана.";
+
+  if ($("area").value !== "" && Number.isFinite(area) && area > 0) {
+    $("areaResult").textContent =
+      "Расчётная площадь: " + number(area) + " м².";
+
+    $("totalForce").textContent = number(total * area);
+  } else {
+    $("areaResult").textContent = "Площадь не задана.";
+    $("totalForce").textContent = "0.00";
+  }
 }
 
 $("addButton").addEventListener("click", () => {
   const name = $("loadName").value.trim();
-  const value = $("loadValue").value;
-  const gamma = $("gamma").value;
+  const valueText = $("loadValue").value;
+  const gammaText = $("gamma").value;
+
+  const value = Number(valueText);
+  const gamma = Number(gammaText);
 
   if (
-    !name ||
-    value === "" ||
-    gamma === "" ||
-    !Number.isFinite(Number(value)) ||
-    !Number.isFinite(Number(gamma)) ||
-    Number(value) < 0 ||
-    Number(gamma) <= 0
+    name === "" ||
+    valueText === "" ||
+    gammaText === "" ||
+    !Number.isFinite(value) ||
+    !Number.isFinite(gamma) ||
+    value < 0 ||
+    gamma <= 0
   ) {
-    $("status").textContent =
-      "Заполните название, нагрузку и коэффициент. Нагрузка должна быть неотрицательной, коэффициент — больше нуля.";
+    showStatus(
+      "Проверьте данные: название обязательно, нагрузка неотрицательная, коэффициент больше нуля."
+    );
     return;
   }
 
-  loads.push({
+  const item = {
     name: name,
     type: $("loadType").value,
-    value: Number(value),
-    gamma: Number(gamma)
-  });
+    value: value,
+    gamma: gamma
+  };
 
-  $("loadName").value = "";
-  $("loadValue").value = "";
-  $("gamma").value = "";
+  if (editingIndex === null) {
+    loads.push(item);
+    showStatus("Нагрузка успешно добавлена.");
+  } else {
+    loads[editingIndex] = item;
+    showStatus("Нагрузка успешно изменена.");
+  }
 
-  $("status").textContent = "Нагрузка добавлена.";
+  resetForm();
   render();
+});
+
+$("cancelButton").addEventListener("click", () => {
+  resetForm();
+  render();
+  showStatus("Редактирование отменено.");
 });
 
 $("loadTable").addEventListener("click", event => {
   const button = event.target.closest("button[data-action]");
+
   if (!button) return;
 
   const index = Number(button.dataset.index);
-  const item = loads[index];
+  const action = button.dataset.action;
 
-  if (!item) return;
+  if (!Number.isInteger(index) || !loads[index]) return;
 
-  if (button.dataset.action === "edit") {
+  if (action === "edit") {
+    const item = loads[index];
+
     $("loadName").value = item.name;
     $("loadType").value = item.type;
     $("loadValue").value = item.value;
     $("gamma").value = item.gamma;
 
-    loads.splice(index, 1);
+    editingIndex = index;
 
-    $("status").textContent =
-      "Исправьте данные и нажмите «Добавить нагрузку».";
+    $("addButton").textContent = "Сохранить изменения";
+    $("cancelButton").hidden = false;
 
-    render();
+    showStatus("Измените нужные данные и нажмите «Сохранить изменения».");
     $("loadName").focus();
   }
 
-  if (button.dataset.action === "delete") {
+  if (action === "delete") {
     loads.splice(index, 1);
-    $("status").textContent = "Строка удалена.";
+
+    if (editingIndex === index) {
+      resetForm();
+    } else if (editingIndex !== null && editingIndex > index) {
+      editingIndex--;
+    }
+
     render();
+    showStatus("Нагрузка удалена.");
   }
 });
 
 $("area").addEventListener("input", render);
 
 render();
-
 </script>
+
 </body>
 </html>

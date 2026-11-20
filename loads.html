@@ -6,10 +6,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Engineering Calculator RK — Loads</title>
 
+<!-- Библиотека для создания настоящих Excel-файлов -->
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
 <style>
-* {
-  box-sizing: border-box;
-}
+* { box-sizing: border-box; }
 
 body {
   margin: 0;
@@ -59,9 +60,7 @@ h2 {
   gap: 14px;
 }
 
-.field {
-  margin-bottom: 14px;
-}
+.field { margin-bottom: 14px; }
 
 label {
   display: block;
@@ -107,13 +106,9 @@ button {
   color: #991b1b;
 }
 
-button:hover {
-  opacity: 0.88;
-}
+button:hover { opacity: 0.88; }
 
-.table-wrap {
-  overflow-x: auto;
-}
+.table-wrap { overflow-x: auto; }
 
 table {
   width: 100%;
@@ -170,13 +165,8 @@ th {
 }
 
 @media(max-width: 600px) {
-  header {
-    padding: 18px;
-  }
-
-  .panel {
-    padding: 14px;
-  }
+  header { padding: 18px; }
+  .panel { padding: 14px; }
 }
 </style>
 </head>
@@ -185,7 +175,7 @@ th {
 
 <header>
   <h1>Engineering Calculator RK</h1>
-  <p>Модуль сбора нагрузок · Версия 1.1</p>
+  <p>Модуль сбора нагрузок · Версия 1.2</p>
 </header>
 
 <main>
@@ -211,7 +201,6 @@ th {
   <h2>2. Ведомость нагрузок</h2>
 
   <div class="grid">
-
     <div class="field">
       <label for="loadName">Наименование нагрузки</label>
       <input id="loadName"
@@ -237,7 +226,6 @@ th {
       <input id="gamma" type="number" min="0" step="any"
              placeholder="Введите коэффициент">
     </div>
-
   </div>
 
   <button class="primary" id="addButton" type="button">
@@ -256,7 +244,7 @@ th {
   <h2>3. Список нагрузок</h2>
 
   <button class="primary" id="exportButton" type="button">
-    Скачать ведомость для Excel
+    Скачать ведомость Excel (.xlsx)
   </button>
 
   <div class="table-wrap">
@@ -285,7 +273,6 @@ th {
   <h2>4. Итоги расчёта</h2>
 
   <div class="summary">
-
     <div class="metric">
       <span>Постоянные расчётные нагрузки</span>
       <strong id="permanentTotal">0.00</strong>
@@ -309,7 +296,6 @@ th {
       <strong id="totalForce">0.00</strong>
       <span>кН</span>
     </div>
-
   </div>
 
   <p class="note" id="areaResult">Площадь не задана.</p>
@@ -537,45 +523,17 @@ $("area").addEventListener("input", render);
 
 render();
 
+// ЭКСПОРТ В НАСТОЯЩИЙ ФАЙЛ EXCEL XLSX
 $("exportButton").addEventListener("click", () => {
   if (loads.length === 0) {
     showStatus("Сначала добавьте хотя бы одну нагрузку.");
     return;
   }
 
-  // Формат чисел для русской версии Excel:
-  // десятичная точка заменяется запятой.
-  const excelNumber = value =>
-    Number(value).toFixed(2).replace(".", ",");
-
-  const rows = [
-    ["Ведомость сбора нагрузок"],
-    ["Объект", $("objectName").value],
-    [
-      "Площадь, м2",
-      $("area").value !== ""
-        ? excelNumber(Number($("area").value))
-        : ""
-    ],
-    [],
-    [
-      "Наименование",
-      "Категория",
-      "Нормативная нагрузка, кН/м2",
-      "Коэффициент gamma_f",
-      "Расчетная нагрузка, кН/м2"
-    ]
-  ];
-
-  loads.forEach(item => {
-    rows.push([
-      item.name,
-      item.type === "permanent" ? "Постоянная" : "Временная",
-      excelNumber(item.value),
-      excelNumber(item.gamma),
-      excelNumber(item.value * item.gamma)
-    ]);
-  });
+  if (typeof XLSX === "undefined") {
+    showStatus("Не удалось загрузить библиотеку Excel. Проверьте подключение к интернету и обновите страницу.");
+    return;
+  }
 
   const permanent = loads
     .filter(item => item.type === "permanent")
@@ -585,44 +543,87 @@ $("exportButton").addEventListener("click", () => {
     .filter(item => item.type === "variable")
     .reduce((sum, item) => sum + item.value * item.gamma, 0);
 
-  const area = Number($("area").value);
   const total = permanent + variable;
+  const areaText = $("area").value;
+  const area = Number(areaText);
+
+  // Числа передаются в Excel как числовые значения,
+  // а не как текстовые строки.
+  const rows = [
+    ["ВЕДОМОСТЬ СБОРА НАГРУЗОК"],
+    ["Объект", $("objectName").value],
+    ["Площадь, м²", areaText !== "" ? area : ""],
+    [],
+    [
+      "Наименование",
+      "Категория",
+      "Нормативная нагрузка, кН/м²",
+      "Коэффициент γf",
+      "Расчётная нагрузка, кН/м²"
+    ]
+  ];
+
+  loads.forEach(item => {
+    rows.push([
+      item.name,
+      item.type === "permanent" ? "Постоянная" : "Временная",
+      item.value,
+      item.gamma,
+      item.value * item.gamma
+    ]);
+  });
 
   rows.push(
     [],
     ["ИТОГИ"],
-    ["Постоянные нагрузки, кН/м2", excelNumber(permanent)],
-    ["Временные нагрузки, кН/м2", excelNumber(variable)],
-    ["Общая нагрузка, кН/м2", excelNumber(total)],
-    [
-      "Полная сила, кН",
-      area > 0 ? excelNumber(total * area) : "Не задана"
-    ]
+    ["Постоянные нагрузки, кН/м²", permanent],
+    ["Временные нагрузки, кН/м²", variable],
+    ["Общая нагрузка, кН/м²", total],
+    ["Полная сила, кН", areaText !== "" && area > 0 ? total * area : "Не задана"]
   );
 
-  const csv = "\uFEFF" + rows.map(row =>
-    row.map(value =>
-      '"' + String(value ?? "").replace(/"/g, '""') + '"'
-    ).join(";")
-  ).join("\r\n");
+  const worksheet = XLSX.utils.aoa_to_sheet(rows);
 
-  const blob = new Blob([csv], {
-    type: "text/csv;charset=utf-8;"
-  });
+  // Ширина столбцов
+  worksheet["!cols"] = [
+    { wch: 35 },
+    { wch: 18 },
+    { wch: 25 },
+    { wch: 20 },
+    { wch: 25 }
+  ];
 
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
+  // Формат отображения чисел: два знака после запятой.
+  // При этом значения остаются настоящими числами Excel.
+  if (worksheet["!ref"]) {
+    const range = XLSX.utils.decode_range(worksheet["!ref"]);
 
-  link.href = url;
-  link.download = "vedomost_nagruzok.csv";
+    for (let row = range.s.r; row <= range.e.r; row++) {
+      for (let col = range.s.c; col <= range.e.c; col++) {
+        const address = XLSX.utils.encode_cell({ r: row, c: col });
+        const cell = worksheet[address];
 
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
+        if (cell && cell.t === "n") {
+          cell.z = "0.00";
+        }
+      }
+    }
+  }
 
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  const workbook = XLSX.utils.book_new();
 
-  showStatus("Ведомость успешно сформирована.");
+  XLSX.utils.book_append_sheet(
+    workbook,
+    worksheet,
+    "Ведомость нагрузок"
+  );
+
+  XLSX.writeFile(
+    workbook,
+    "vedomost_nagruzok.xlsx"
+  );
+
+  showStatus("Настоящий файл Excel (.xlsx) успешно сформирован.");
 });
 
 </script>

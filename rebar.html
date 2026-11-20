@@ -1,1 +1,1285 @@
 
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Калькулятор арматуры 1.0</title>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+<style>
+:root {
+  --blue:#174a78;
+  --blue2:#23699f;
+  --bg:#f2f5f8;
+  --border:#d8e0e8;
+  --text:#243447;
+  --muted:#68798b;
+  --green:#238451;
+  --red:#bd4141;
+}
+* {box-sizing:border-box}
+body {
+  margin:0;
+  padding:22px;
+  background:var(--bg);
+  color:var(--text);
+  font-family:Arial,sans-serif;
+}
+.container {max-width:1450px;margin:auto}
+header {
+  background:linear-gradient(120deg,#143d63,#2875a9);
+  color:white;
+  padding:24px;
+  border-radius:12px;
+  margin-bottom:20px;
+}
+header h1 {margin:0 0 8px;font-size:25px}
+header p {margin:0;color:#dceaf5}
+.card {
+  background:white;
+  border:1px solid var(--border);
+  border-radius:10px;
+  padding:20px;
+  margin-bottom:18px;
+  box-shadow:0 2px 7px #182f4610;
+}
+h2 {
+  font-size:19px;
+  color:var(--blue);
+  margin:0 0 16px;
+  padding-bottom:10px;
+  border-bottom:1px solid var(--border);
+}
+h3 {font-size:16px;color:var(--blue);margin:20px 0 12px}
+.grid {
+  display:grid;
+  grid-template-columns:repeat(4,minmax(150px,1fr));
+  gap:13px;
+}
+.grid-3 {grid-template-columns:repeat(3,minmax(150px,1fr))}
+.grid-2 {grid-template-columns:repeat(2,minmax(150px,1fr))}
+.field {display:flex;flex-direction:column;gap:6px}
+label {font-size:13px;font-weight:bold;color:#46596d}
+input,select,textarea {
+  width:100%;
+  padding:10px;
+  border:1px solid #cbd5df;
+  border-radius:6px;
+  font-size:14px;
+  background:white;
+  color:var(--text);
+}
+input:focus,select:focus {
+  outline:2px solid #8bbce0;
+  border-color:var(--blue2);
+}
+button {
+  border:0;
+  border-radius:6px;
+  padding:10px 15px;
+  font-weight:bold;
+  cursor:pointer;
+  font-size:13px;
+  margin:4px 3px 4px 0;
+}
+.primary {background:var(--blue2);color:white}
+.success {background:var(--green);color:white}
+.danger {background:var(--red);color:white}
+.secondary {background:#e7edf3;color:#30465b}
+button:hover {filter:brightness(.94)}
+.actions {margin-top:14px;display:flex;flex-wrap:wrap;gap:5px}
+.table-wrap {overflow-x:auto}
+table {
+  border-collapse:collapse;
+  width:100%;
+  min-width:850px;
+  font-size:13px;
+}
+th,td {
+  border:1px solid var(--border);
+  padding:9px;
+  text-align:center;
+}
+th {background:#eaf1f7;color:#23435f}
+td.left,th.left {text-align:left}
+.total-row {font-weight:bold;background:#f0f5f9}
+.summary {
+  display:grid;
+  grid-template-columns:repeat(4,minmax(130px,1fr));
+  gap:12px;
+  margin-top:14px;
+}
+.metric {
+  background:#f0f5f9;
+  border:1px solid var(--border);
+  border-radius:8px;
+  padding:13px;
+}
+.metric span {
+  display:block;
+  font-size:12px;
+  color:var(--muted);
+  margin-bottom:7px;
+}
+.metric strong {font-size:19px;color:var(--blue)}
+.note {
+  background:#fff8e8;
+  border-left:4px solid #d69b2d;
+  padding:12px;
+  border-radius:5px;
+  font-size:13px;
+  line-height:1.5;
+  margin-top:12px;
+}
+.info {
+  background:#eef6fc;
+  border-left:4px solid #4389bd;
+  padding:12px;
+  border-radius:5px;
+  font-size:13px;
+  line-height:1.5;
+  margin-top:12px;
+}
+.hidden {display:none!important}
+.small-btn {padding:7px 10px;font-size:12px}
+.empty {color:#8795a3;padding:15px;text-align:center}
+.preset-row {
+  display:flex;
+  flex-wrap:wrap;
+  gap:7px;
+  margin:12px 0;
+}
+.preset {
+  background:#edf3f8;
+  border:1px solid var(--border);
+  border-radius:6px;
+  padding:8px 11px;
+  cursor:pointer;
+  font-size:12px;
+}
+.preset:hover {background:#dceaf5}
+footer {
+  font-size:12px;
+  color:var(--muted);
+  text-align:center;
+  padding:12px;
+}
+@media(max-width:900px) {
+  .grid,.grid-3,.grid-2,.summary {
+    grid-template-columns:repeat(2,minmax(130px,1fr));
+  }
+}
+@media(max-width:600px) {
+  body {padding:10px}
+  .grid,.grid-3,.grid-2,.summary {grid-template-columns:1fr}
+  header h1 {font-size:21px}
+}
+@media print {
+  body {background:white;padding:0}
+  header {
+    background:white;
+    color:#111;
+    border:1px solid #777;
+  }
+  header p {color:#333}
+  .no-print,button {display:none!important}
+  .card {
+    box-shadow:none;
+    break-inside:avoid;
+    border:1px solid #aaa;
+  }
+  .table-wrap {overflow:visible}
+  table {min-width:0;font-size:9px}
+  th,td {padding:5px}
+}
+</style>
+</head>
+
+<body>
+<div class="container">
+
+<header>
+  <h1>Калькулятор арматуры</h1>
+  <p>Версия 1.0 · Расчёт расхода арматуры и ведомость массы</p>
+</header>
+
+<!-- ДАННЫЕ ПРОЕКТА -->
+<section class="card">
+  <h2>1. Данные проекта</h2>
+
+  <div class="grid">
+    <div class="field">
+      <label>Наименование объекта</label>
+      <input id="projectName" placeholder="Наименование объекта">
+    </div>
+
+    <div class="field">
+      <label>Адрес объекта</label>
+      <input id="projectAddress" placeholder="Город, адрес">
+    </div>
+
+    <div class="field">
+      <label>Шифр проекта</label>
+      <input id="projectCode" placeholder="Шифр">
+    </div>
+
+    <div class="field">
+      <label>Стадия</label>
+      <select id="projectStage">
+        <option>ЭП</option>
+        <option selected>РП</option>
+        <option>Р</option>
+        <option>П</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label>Раздел</label>
+      <input id="projectSection" placeholder="КЖ">
+    </div>
+
+    <div class="field">
+      <label>Номер листа</label>
+      <input id="sheetNumber" placeholder="Лист">
+    </div>
+
+    <div class="field">
+      <label>Разработал</label>
+      <input id="author" placeholder="Ф.И.О.">
+    </div>
+
+    <div class="field">
+      <label>Проверил</label>
+      <input id="checker" placeholder="Ф.И.О.">
+    </div>
+
+    <div class="field">
+      <label>Дата расчёта</label>
+      <input id="projectDate" type="date">
+    </div>
+  </div>
+
+  <div class="actions no-print">
+    <button class="primary" onclick="saveProject()">Сохранить данные проекта</button>
+    <button class="secondary" onclick="loadProject()">Загрузить данные проекта</button>
+  </div>
+</section>
+
+<!-- ДОБАВЛЕНИЕ АРМАТУРЫ -->
+<section class="card">
+  <h2>2. Добавление арматуры</h2>
+
+  <div class="grid">
+    <div class="field">
+      <label>Конструкция</label>
+      <select id="element">
+        <option>Фундаментная плита</option>
+        <option>Ленточный фундамент</option>
+        <option>Фундаментная балка</option>
+        <option>Колонна</option>
+        <option>Балка</option>
+        <option>Плита перекрытия</option>
+        <option>Стена</option>
+        <option>Лестница</option>
+        <option>Перемычка</option>
+        <option>Другая конструкция</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label>Марка арматуры</label>
+      <input id="mark" placeholder="Например, А1, А2, А3">
+    </div>
+
+    <div class="field">
+      <label>Диаметр, мм</label>
+      <select id="diameter" onchange="updateWeight()">
+        <option value="6">6</option>
+        <option value="8">8</option>
+        <option value="10">10</option>
+        <option value="12" selected>12</option>
+        <option value="14">14</option>
+        <option value="16">16</option>
+        <option value="18">18</option>
+        <option value="20">20</option>
+        <option value="22">22</option>
+        <option value="25">25</option>
+        <option value="28">28</option>
+        <option value="32">32</option>
+        <option value="36">36</option>
+        <option value="40">40</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label>Класс арматуры</label>
+      <select id="steelClass">
+        <option>А240</option>
+        <option>А400</option>
+        <option selected>А500С</option>
+        <option>В500</option>
+        <option>Другой</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label>Длина одного стержня, м</label>
+      <input id="barLength" type="number" step="0.01" min="0" value="6">
+    </div>
+
+    <div class="field">
+      <label>Количество стержней, шт.</label>
+      <input id="barCount" type="number" step="1" min="1" value="10">
+    </div>
+
+    <div class="field">
+      <label>Дополнительный расход, %</label>
+      <input id="waste" type="number" step="0.1" min="0" value="0">
+    </div>
+
+    <div class="field">
+      <label>Погонная масса, кг/м</label>
+      <input id="unitWeight" type="number" step="0.001" readonly>
+    </div>
+
+    <div class="field">
+      <label>Расположение / оси</label>
+      <input id="location" placeholder="Например, оси 1–2 / А–Б">
+    </div>
+
+    <div class="field">
+      <label>Примечание</label>
+      <input id="note" placeholder="Верхняя сетка, нижняя сетка и т.д.">
+    </div>
+  </div>
+
+  <div class="info">
+    Погонная масса рассчитывается автоматически по формуле:
+    <b>m = d² / 162</b>, где d — диаметр арматуры в мм.
+  </div>
+
+  <h3>Быстрый выбор диаметра</h3>
+  <div class="preset-row no-print">
+    <button class="preset" onclick="setDiameter(8)">Ø8</button>
+    <button class="preset" onclick="setDiameter(10)">Ø10</button>
+    <button class="preset" onclick="setDiameter(12)">Ø12</button>
+    <button class="preset" onclick="setDiameter(14)">Ø14</button>
+    <button class="preset" onclick="setDiameter(16)">Ø16</button>
+    <button class="preset" onclick="setDiameter(18)">Ø18</button>
+    <button class="preset" onclick="setDiameter(20)">Ø20</button>
+    <button class="preset" onclick="setDiameter(22)">Ø22</button>
+    <button class="preset" onclick="setDiameter(25)">Ø25</button>
+    <button class="preset" onclick="setDiameter(28)">Ø28</button>
+    <button class="preset" onclick="setDiameter(32)">Ø32</button>
+  </div>
+
+  <div class="actions no-print">
+    <button class="primary" onclick="addBar()">Добавить в ведомость</button>
+    <button class="secondary" onclick="clearBarForm()">Очистить поля</button>
+  </div>
+</section>
+
+<!-- АВТОМАТИЧЕСКИЙ ПОДСЧЕТ -->
+<section class="card">
+  <h2>3. Автоматический подсчёт по шагу</h2>
+
+  <div class="grid">
+    <div class="field">
+      <label>Конструкция</label>
+      <select id="autoElement">
+        <option>Фундаментная плита</option>
+        <option>Ленточный фундамент</option>
+        <option>Плита перекрытия</option>
+        <option>Стена</option>
+        <option>Балка</option>
+        <option>Колонна</option>
+        <option>Другая конструкция</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label>Марка стержней</label>
+      <input id="autoMark" placeholder="Например, А1">
+    </div>
+
+    <div class="field">
+      <label>Диаметр, мм</label>
+      <select id="autoDiameter">
+        <option value="8">8</option>
+        <option value="10">10</option>
+        <option value="12" selected>12</option>
+        <option value="14">14</option>
+        <option value="16">16</option>
+        <option value="18">18</option>
+        <option value="20">20</option>
+        <option value="22">22</option>
+        <option value="25">25</option>
+        <option value="28">28</option>
+        <option value="32">32</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label>Класс арматуры</label>
+      <select id="autoClass">
+        <option>А240</option>
+        <option>А400</option>
+        <option selected>А500С</option>
+        <option>В500</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label>Размер конструкции, мм</label>
+      <input id="dimension" type="number" step="1" value="6000" oninput="calculateCount()">
+    </div>
+
+    <div class="field">
+      <label>Защитный слой, мм</label>
+      <input id="cover" type="number" step="1" value="40" oninput="calculateCount()">
+    </div>
+
+    <div class="field">
+      <label>Шаг стержней, мм</label>
+      <input id="spacing" type="number" step="1" value="200" oninput="calculateCount()">
+    </div>
+
+    <div class="field">
+      <label>Длина одного стержня, м</label>
+      <input id="autoLength" type="number" step="0.01" value="6" oninput="calculateCount()">
+    </div>
+
+    <div class="field">
+      <label>Количество одинаковых участков</label>
+      <input id="sections" type="number" step="1" min="1" value="1" oninput="calculateCount()">
+    </div>
+
+    <div class="field">
+      <label>Дополнительный расход, %</label>
+      <input id="autoWaste" type="number" step="0.1" min="0" value="0">
+    </div>
+
+    <div class="field">
+      <label>Расположение / оси</label>
+      <input id="autoLocation" placeholder="Например, нижняя сетка">
+    </div>
+
+    <div class="field">
+      <label>Примечание</label>
+      <input id="autoNote" placeholder="Например, направление X">
+    </div>
+  </div>
+
+  <div class="summary">
+    <div class="metric">
+      <span>Рабочая ширина, мм</span>
+      <strong id="workingWidth">0</strong>
+    </div>
+    <div class="metric">
+      <span>Количество стержней на участке</span>
+      <strong id="calculatedCount">0</strong>
+    </div>
+    <div class="metric">
+      <span>Общее количество стержней</span>
+      <strong id="calculatedTotal">0</strong>
+    </div>
+    <div class="metric">
+      <span>Общая длина, м</span>
+      <strong id="calculatedLength">0.00</strong>
+    </div>
+  </div>
+
+  <div class="info">
+    Количество определяется по формуле:
+    <b>n = округление вниз ((B − 2c) / s) + 1</b>,
+    где B — размер конструкции, c — защитный слой, s — шаг стержней.
+    Полученное количество умножается на число одинаковых участков.
+  </div>
+
+  <div class="actions no-print">
+    <button class="success" onclick="addAutoBars()">Добавить рассчитанные стержни в ведомость</button>
+  </div>
+</section>
+
+<!-- ВЕДОМОСТЬ -->
+<section class="card">
+  <h2>4. Ведомость расхода арматуры</h2>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>№</th>
+          <th>Конструкция</th>
+          <th>Марка</th>
+          <th>Диаметр</th>
+          <th>Класс</th>
+          <th>Длина 1 шт., м</th>
+          <th>Кол-во, шт.</th>
+          <th>Общая длина, м</th>
+          <th>Масса кг/м</th>
+          <th>Масса без запаса, кг</th>
+          <th>Запас, %</th>
+          <th>Итого, кг</th>
+          <th class="no-print">Действия</th>
+        </tr>
+      </thead>
+      <tbody id="barTable">
+        <tr><td colspan="13" class="empty">Арматура пока не добавлена</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="summary">
+    <div class="metric">
+      <span>Количество позиций</span>
+      <strong id="positionCount">0</strong>
+    </div>
+    <div class="metric">
+      <span>Общая длина арматуры</span>
+      <strong id="totalLength">0.00</strong> м
+    </div>
+    <div class="metric">
+      <span>Масса без дополнительного расхода</span>
+      <strong id="totalNetWeight">0.00</strong> кг
+    </div>
+    <div class="metric">
+      <span>Общая масса с дополнительным расходом</span>
+      <strong id="totalGrossWeight">0.00</strong> кг
+    </div>
+  </div>
+</section>
+
+<!-- ИТОГИ ПО ДИАМЕТРАМ -->
+<section class="card">
+  <h2>5. Итоги расхода по диаметрам</h2>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Диаметр, мм</th>
+          <th>Погонная масса, кг/м</th>
+          <th>Количество стержней, шт.</th>
+          <th>Общая длина, м</th>
+          <th>Масса без запаса, кг</th>
+          <th>Масса с запасом, кг</th>
+        </tr>
+      </thead>
+      <tbody id="diameterTable">
+        <tr><td colspan="6" class="empty">Нет данных</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ИТОГИ ПО КОНСТРУКЦИЯМ -->
+<section class="card">
+  <h2>6. Итоги по конструкциям</h2>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Конструкция</th>
+          <th>Количество позиций</th>
+          <th>Общая длина, м</th>
+          <th>Общая масса, кг</th>
+          <th>Общая масса, т</th>
+        </tr>
+      </thead>
+      <tbody id="elementTable">
+        <tr><td colspan="5" class="empty">Нет данных</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ЭКСПОРТ -->
+<section class="card">
+  <h2>7. Экспорт и сохранение</h2>
+
+  <div class="actions no-print">
+    <button class="success" onclick="exportExcel()">Выгрузить ведомость в Excel</button>
+    <button class="primary" onclick="window.print()">Печать / Сохранить PDF</button>
+    <button class="secondary" onclick="saveCalculation()">Сохранить расчёт в браузере</button>
+    <button class="secondary" onclick="loadCalculation()">Загрузить расчёт из браузера</button>
+    <button class="danger" onclick="clearAll()">Очистить ведомость</button>
+  </div>
+
+  <div class="note">
+    В Excel формируются отдельные листы:
+    «Ведомость арматуры», «Итоги по диаметрам», «Итоги по конструкциям» и «Данные проекта».
+  </div>
+</section>
+
+<section class="card">
+  <h2>8. Методика расчёта</h2>
+  <p><b>Теоретическая масса погонного метра:</b></p>
+  <p>m = d² / 162, кг/м</p>
+
+  <p><b>Общая длина:</b></p>
+  <p>Lобщ = Lстержня × количество, м</p>
+
+  <p><b>Масса без дополнительного расхода:</b></p>
+  <p>M = Lобщ × m, кг</p>
+
+  <p><b>Масса с дополнительным расходом:</b></p>
+  <p>Mитог = M × (1 + процент / 100), кг</p>
+
+  <div class="note">
+    Калькулятор определяет теоретический расход по введённым длинам и количеству.
+    Он не выполняет подбор арматуры по прочности, расчёт анкеровки,
+    нахлёстов, загибов, защитного слоя по нормам и проверку несущей способности.
+    Эти параметры необходимо определять по рабочим чертежам и действующим нормам РК.
+  </div>
+</section>
+
+<footer>
+  Инженерный калькулятор арматуры · Версия 1.0
+</footer>
+
+</div>
+
+<script>
+let bars = [];
+
+const $ = id => document.getElementById(id);
+
+function numberValue(id) {
+  const value = parseFloat($(id).value);
+  return Number.isFinite(value) ? value : 0;
+}
+
+function fmt(value) {
+  return (Number.isFinite(value) ? value : 0).toFixed(2);
+}
+
+function escapeHTML(value) {
+  return String(value ?? "").replace(/[&<>"']/g, c => ({
+    "&":"&amp;",
+    "<":"&lt;",
+    ">":"&gt;",
+    '"':"&quot;",
+    "'":"&#39;"
+  }[c]));
+}
+
+function theoreticalWeight(diameter) {
+  return diameter * diameter / 162;
+}
+
+function updateWeight() {
+  const d = numberValue("diameter");
+  $("unitWeight").value = theoreticalWeight(d).toFixed(3);
+}
+
+function setDiameter(d) {
+  $("diameter").value = d;
+  updateWeight();
+}
+
+function calculateBarMass(bar) {
+  const unit = theoreticalWeight(bar.diameter);
+  const totalLength = bar.length * bar.count;
+  const netWeight = totalLength * unit;
+  const grossWeight = netWeight * (1 + bar.waste / 100);
+
+  return {
+    unit,
+    totalLength,
+    netWeight,
+    grossWeight
+  };
+}
+
+function addBar() {
+  const element = $("element").value;
+  const mark = $("mark").value.trim();
+  const diameter = numberValue("diameter");
+  const steelClass = $("steelClass").value;
+  const length = numberValue("barLength");
+  const count = numberValue("barCount");
+  const waste = numberValue("waste");
+
+  if (diameter <= 0 || length <= 0 || count <= 0 || waste < 0) {
+    alert("Проверьте диаметр, длину, количество и дополнительный расход.");
+    return;
+  }
+
+  bars.push({
+    element,
+    mark: mark || "Без марки",
+    diameter,
+    steelClass,
+    length,
+    count: Math.round(count),
+    waste,
+    location: $("location").value,
+    note: $("note").value,
+    source: "Ручной ввод"
+  });
+
+  renderAll();
+  clearBarForm();
+}
+
+function clearBarForm() {
+  $("mark").value = "";
+  $("barLength").value = 6;
+  $("barCount").value = 10;
+  $("waste").value = 0;
+  $("location").value = "";
+  $("note").value = "";
+  $("diameter").value = 12;
+  $("steelClass").value = "А500С";
+  updateWeight();
+}
+
+function calculateCount() {
+  const dimension = numberValue("dimension");
+  const cover = numberValue("cover");
+  const spacing = numberValue("spacing");
+  const length = numberValue("autoLength");
+  const sections = numberValue("sections");
+
+  const working = dimension - 2 * cover;
+
+  if (dimension <= 0 || cover < 0 || spacing <= 0 ||
+      length <= 0 || sections <= 0 || working < 0) {
+    $("workingWidth").textContent = "—";
+    $("calculatedCount").textContent = "—";
+    $("calculatedTotal").textContent = "—";
+    $("calculatedLength").textContent = "—";
+    return;
+  }
+
+  const count = Math.floor(working / spacing) + 1;
+  const total = count * Math.round(sections);
+
+  $("workingWidth").textContent = fmt(working);
+  $("calculatedCount").textContent = count;
+  $("calculatedTotal").textContent = total;
+  $("calculatedLength").textContent = fmt(total * length);
+}
+
+function addAutoBars() {
+  calculateCount();
+
+  const dimension = numberValue("dimension");
+  const cover = numberValue("cover");
+  const spacing = numberValue("spacing");
+  const length = numberValue("autoLength");
+  const sections = numberValue("sections");
+  const waste = numberValue("autoWaste");
+
+  if (dimension <= 0 || cover < 0 || spacing <= 0 ||
+      length <= 0 || sections <= 0 || waste < 0 ||
+      dimension - 2 * cover < 0) {
+    alert("Проверьте размеры, защитный слой, шаг, длину и количество участков.");
+    return;
+  }
+
+  const countPerSection =
+    Math.floor((dimension - 2 * cover) / spacing) + 1;
+
+  const totalCount = countPerSection * Math.round(sections);
+
+  bars.push({
+    element: $("autoElement").value,
+    mark: $("autoMark").value.trim() || "Без марки",
+    diameter: numberValue("autoDiameter"),
+    steelClass: $("autoClass").value,
+    length,
+    count: totalCount,
+    waste,
+    location: $("autoLocation").value,
+    note: $("autoNote").value,
+    source: "Автоматический расчёт по шагу",
+    dimension,
+    cover,
+    spacing,
+    countPerSection,
+    sections: Math.round(sections)
+  });
+
+  renderAll();
+
+  alert(
+    "Арматура добавлена.\n" +
+    "Количество на участке: " + countPerSection + " шт.\n" +
+    "Количество участков: " + Math.round(sections) + "\n" +
+    "Общее количество: " + totalCount + " шт."
+  );
+}
+
+function editBar(index) {
+  const bar = bars[index];
+
+  const mark = prompt("Марка арматуры:", bar.mark);
+  if (mark === null) return;
+
+  const length = parseFloat(prompt("Длина одного стержня, м:", bar.length));
+  const count = parseInt(prompt("Количество стержней, шт.:", bar.count), 10);
+  const waste = parseFloat(prompt("Дополнительный расход, %:", bar.waste));
+
+  if (!Number.isFinite(length) || length <= 0 ||
+      !Number.isInteger(count) || count <= 0 ||
+      !Number.isFinite(waste) || waste < 0) {
+    alert("Проверьте введённые значения.");
+    return;
+  }
+
+  bar.mark = mark.trim() || "Без марки";
+  bar.length = length;
+  bar.count = count;
+  bar.waste = waste;
+
+  renderAll();
+}
+
+function deleteBar(index) {
+  if (confirm("Удалить эту позицию арматуры?")) {
+    bars.splice(index, 1);
+    renderAll();
+  }
+}
+
+function renderBarTable() {
+  const tbody = $("barTable");
+
+  if (!bars.length) {
+    tbody.innerHTML =
+      '<tr><td colspan="13" class="empty">Арматура пока не добавлена</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = bars.map((bar, index) => {
+    const mass = calculateBarMass(bar);
+
+    return `
+      <tr>
+        <td>${index + 1}</td>
+        <td class="left">${escapeHTML(bar.element)}</td>
+        <td>${escapeHTML(bar.mark)}</td>
+        <td>Ø${bar.diameter}</td>
+        <td>${escapeHTML(bar.steelClass)}</td>
+        <td>${fmt(bar.length)}</td>
+        <td>${bar.count}</td>
+        <td>${fmt(mass.totalLength)}</td>
+        <td>${fmt(mass.unit)}</td>
+        <td>${fmt(mass.netWeight)}</td>
+        <td>${fmt(bar.waste)}</td>
+        <td><b>${fmt(mass.grossWeight)}</b></td>
+        <td class="no-print">
+          <button class="secondary small-btn" onclick="editBar(${index})">Изменить</button>
+          <button class="danger small-btn" onclick="deleteBar(${index})">Удалить</button>
+        </td>
+      </tr>
+    `;
+  }).join("");
+}
+
+function renderSummary() {
+  let totalLength = 0;
+  let totalNet = 0;
+  let totalGross = 0;
+
+  bars.forEach(bar => {
+    const mass = calculateBarMass(bar);
+    totalLength += mass.totalLength;
+    totalNet += mass.netWeight;
+    totalGross += mass.grossWeight;
+  });
+
+  $("positionCount").textContent = bars.length;
+  $("totalLength").textContent = fmt(totalLength);
+  $("totalNetWeight").textContent = fmt(totalNet);
+  $("totalGrossWeight").textContent = fmt(totalGross);
+}
+
+function renderDiameterSummary() {
+  const groups = {};
+
+  bars.forEach(bar => {
+    const d = bar.diameter;
+    if (!groups[d]) {
+      groups[d] = {
+        diameter:d,
+        count:0,
+        length:0,
+        net:0,
+        gross:0
+      };
+    }
+
+    const mass = calculateBarMass(bar);
+    groups[d].count += bar.count;
+    groups[d].length += mass.totalLength;
+    groups[d].net += mass.netWeight;
+    groups[d].gross += mass.grossWeight;
+  });
+
+  const list = Object.values(groups).sort((a,b)=>a.diameter-b.diameter);
+  const tbody = $("diameterTable");
+
+  if (!list.length) {
+    tbody.innerHTML = '<tr><td colspan="6" class="empty">Нет данных</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = list.map(x => `
+    <tr>
+      <td>Ø${x.diameter}</td>
+      <td>${fmt(theoreticalWeight(x.diameter))}</td>
+      <td>${x.count}</td>
+      <td>${fmt(x.length)}</td>
+      <td>${fmt(x.net)}</td>
+      <td><b>${fmt(x.gross)}</b></td>
+    </tr>
+  `).join("");
+}
+
+function renderElementSummary() {
+  const groups = {};
+
+  bars.forEach(bar => {
+    if (!groups[bar.element]) {
+      groups[bar.element] = {
+        element:bar.element,
+        positions:0,
+        length:0,
+        weight:0
+      };
+    }
+
+    const mass = calculateBarMass(bar);
+    groups[bar.element].positions++;
+    groups[bar.element].length += mass.totalLength;
+    groups[bar.element].weight += mass.grossWeight;
+  });
+
+  const list = Object.values(groups);
+  const tbody = $("elementTable");
+
+  if (!list.length) {
+    tbody.innerHTML = '<tr><td colspan="5" class="empty">Нет данных</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = list.map(x => `
+    <tr>
+      <td class="left">${escapeHTML(x.element)}</td>
+      <td>${x.positions}</td>
+      <td>${fmt(x.length)}</td>
+      <td>${fmt(x.weight)}</td>
+      <td>${fmt(x.weight / 1000)}</td>
+    </tr>
+  `).join("");
+}
+
+function renderAll() {
+  renderBarTable();
+  renderSummary();
+  renderDiameterSummary();
+  renderElementSummary();
+}
+
+function getProjectData() {
+  const ids = [
+    "projectName",
+    "projectAddress",
+    "projectCode",
+    "projectStage",
+    "projectSection",
+    "sheetNumber",
+    "author",
+    "checker",
+    "projectDate"
+  ];
+
+  const data = {};
+  ids.forEach(id => data[id] = $(id).value);
+  return data;
+}
+
+function saveProject() {
+  localStorage.setItem(
+    "rebarProject",
+    JSON.stringify(getProjectData())
+  );
+  alert("Данные проекта сохранены в браузере.");
+}
+
+function loadProject() {
+  const raw = localStorage.getItem("rebarProject");
+
+  if (!raw) {
+    alert("Сохранённых данных проекта нет.");
+    return;
+  }
+
+  try {
+    const data = JSON.parse(raw);
+    Object.keys(data).forEach(id => {
+      if ($(id)) $(id).value = data[id];
+    });
+    alert("Данные проекта загружены.");
+  } catch (error) {
+    alert("Не удалось загрузить данные проекта.");
+  }
+}
+
+function saveCalculation() {
+  const data = {
+    project:getProjectData(),
+    bars
+  };
+
+  localStorage.setItem("rebarCalculation", JSON.stringify(data));
+  alert("Расчёт и ведомость сохранены в браузере.");
+}
+
+function loadCalculation() {
+  const raw = localStorage.getItem("rebarCalculation");
+
+  if (!raw) {
+    alert("Сохранённый расчёт не найден.");
+    return;
+  }
+
+  try {
+    const data = JSON.parse(raw);
+
+    if (!Array.isArray(data.bars)) {
+      throw new Error("Неверный формат данных");
+    }
+
+    Object.keys(data.project || {}).forEach(id => {
+      if ($(id)) $(id).value = data.project[id];
+    });
+
+    bars = data.bars;
+    renderAll();
+
+    alert("Расчёт успешно загружен.");
+  } catch (error) {
+    alert("Не удалось загрузить расчёт.");
+  }
+}
+
+function exportExcel() {
+  if (typeof XLSX === "undefined") {
+    alert("Библиотека Excel не загрузилась. Проверьте подключение к интернету.");
+    return;
+  }
+
+  const wb = XLSX.utils.book_new();
+  const project = getProjectData();
+
+  const projectSheet = [
+    ["ДАННЫЕ ПРОЕКТА"],
+    ["Наименование объекта",project.projectName],
+    ["Адрес",project.projectAddress],
+    ["Шифр проекта",project.projectCode],
+    ["Стадия",project.projectStage],
+    ["Раздел",project.projectSection],
+    ["Номер листа",project.sheetNumber],
+    ["Разработал",project.author],
+    ["Проверил",project.checker],
+    ["Дата",project.projectDate]
+  ];
+
+  const schedule = [
+    ["ВЕДОМОСТЬ РАСХОДА АРМАТУРЫ"],
+    [],
+    [
+      "№",
+      "Конструкция",
+      "Марка",
+      "Диаметр, мм",
+      "Класс",
+      "Длина 1 стержня, м",
+      "Количество, шт.",
+      "Общая длина, м",
+      "Масса кг/м",
+      "Масса без запаса, кг",
+      "Дополнительный расход, %",
+      "Итоговая масса, кг",
+      "Расположение",
+      "Примечание",
+      "Источник расчёта"
+    ]
+  ];
+
+  bars.forEach((bar,index) => {
+    const mass = calculateBarMass(bar);
+
+    schedule.push([
+      index+1,
+      bar.element,
+      bar.mark,
+      bar.diameter,
+      bar.steelClass,
+      bar.length,
+      bar.count,
+      mass.totalLength,
+      mass.unit,
+      mass.netWeight,
+      bar.waste,
+      mass.grossWeight,
+      bar.location || "",
+      bar.note || "",
+      bar.source || ""
+    ]);
+  });
+
+  const diameterGroups = {};
+
+  bars.forEach(bar => {
+    const d = bar.diameter;
+    if (!diameterGroups[d]) {
+      diameterGroups[d] = {
+        count:0,
+        length:0,
+        net:0,
+        gross:0
+      };
+    }
+
+    const mass = calculateBarMass(bar);
+    diameterGroups[d].count += bar.count;
+    diameterGroups[d].length += mass.totalLength;
+    diameterGroups[d].net += mass.netWeight;
+    diameterGroups[d].gross += mass.grossWeight;
+  });
+
+  const diameterSheet = [
+    ["ИТОГИ ПО ДИАМЕТРАМ"],
+    [],
+    [
+      "Диаметр, мм",
+      "Масса кг/м",
+      "Количество, шт.",
+      "Длина, м",
+      "Масса без запаса, кг",
+      "Масса с запасом, кг"
+    ]
+  ];
+
+  Object.keys(diameterGroups)
+    .map(Number)
+    .sort((a,b)=>a-b)
+    .forEach(d => {
+      const x = diameterGroups[d];
+      diameterSheet.push([
+        d,
+        theoreticalWeight(d),
+        x.count,
+        x.length,
+        x.net,
+        x.gross
+      ]);
+    });
+
+  const elementGroups = {};
+
+  bars.forEach(bar => {
+    if (!elementGroups[bar.element]) {
+      elementGroups[bar.element] = {
+        positions:0,
+        length:0,
+        weight:0
+      };
+    }
+
+    const mass = calculateBarMass(bar);
+    elementGroups[bar.element].positions++;
+    elementGroups[bar.element].length += mass.totalLength;
+    elementGroups[bar.element].weight += mass.grossWeight;
+  });
+
+  const elementSheet = [
+    ["ИТОГИ ПО КОНСТРУКЦИЯМ"],
+    [],
+    [
+      "Конструкция",
+      "Количество позиций",
+      "Общая длина, м",
+      "Общая масса, кг",
+      "Общая масса, т"
+    ]
+  ];
+
+  Object.keys(elementGroups).forEach(name => {
+    const x = elementGroups[name];
+    elementSheet.push([
+      name,
+      x.positions,
+      x.length,
+      x.weight,
+      x.weight/1000
+    ]);
+  });
+
+  XLSX.utils.book_append_sheet(
+    wb,
+    XLSX.utils.aoa_to_sheet(schedule),
+    "Ведомость арматуры"
+  );
+
+  XLSX.utils.book_append_sheet(
+    wb,
+    XLSX.utils.aoa_to_sheet(diameterSheet),
+    "Итоги по диаметрам"
+  );
+
+  XLSX.utils.book_append_sheet(
+    wb,
+    XLSX.utils.aoa_to_sheet(elementSheet),
+    "По конструкциям"
+  );
+
+  XLSX.utils.book_append_sheet(
+    wb,
+    XLSX.utils.aoa_to_sheet(projectSheet),
+    "Данные проекта"
+  );
+
+  XLSX.writeFile(wb, "Ведомость_расхода_арматуры.xlsx");
+}
+
+function clearAll() {
+  if (!confirm("Удалить все позиции арматуры из текущей ведомости?")) {
+    return;
+  }
+
+  bars = [];
+  renderAll();
+}
+
+function init() {
+  $("projectDate").value = new Date().toISOString().slice(0,10);
+  updateWeight();
+  calculateCount();
+  renderAll();
+
+  const savedProject = localStorage.getItem("rebarProject");
+
+  if (savedProject) {
+    try {
+      const data = JSON.parse(savedProject);
+      Object.keys(data).forEach(id => {
+        if ($(id)) $(id).value = data[id];
+      });
+    } catch (error) {}
+  }
+}
+
+init();
+</script>
+
+</body>
+</html>
+

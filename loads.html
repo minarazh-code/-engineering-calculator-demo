@@ -4,535 +4,911 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Калькулятор нагрузок — версия 1.5</title>
+<title>Инженерный калькулятор нагрузок 1.6</title>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
-:root{--navy:#17324d;--blue:#2463a6;--light:#f3f6fa;--border:#d7e0e9;--text:#253445;--green:#18794e;--red:#b42318}
-*{box-sizing:border-box}
-body{margin:0;padding:24px;background:var(--light);color:var(--text);font-family:Arial,sans-serif}
-.container{max-width:1300px;margin:auto}
-header{background:var(--navy);color:white;padding:24px;border-radius:12px;margin-bottom:20px}
-header h1{margin:0 0 8px;font-size:25px}
-header p{margin:0;color:#d9e5f1}
-.card{background:white;padding:20px;border:1px solid var(--border);border-radius:12px;margin-bottom:18px}
-h2{font-size:19px;color:var(--navy);margin:0 0 16px}
-h3{font-size:16px;margin:0 0 12px;color:var(--navy)}
-.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
-.field{display:flex;flex-direction:column;gap:6px}
-label{font-size:13px;font-weight:bold;color:#43566b}
-input,select{width:100%;padding:10px;border:1px solid #cbd5df;border-radius:7px;font-size:14px;background:white;color:var(--text)}
-input:focus,select:focus{outline:2px solid #a8c9ed;border-color:var(--blue)}
-small,.hint{font-size:12px;color:#667789;line-height:1.45}
-.panel{background:#f4f8fc;border:1px solid #d7e5f3;padding:16px;border-radius:9px;margin-top:14px}
-.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
-button{border:0;border-radius:7px;padding:11px 16px;font-weight:bold;cursor:pointer;font-size:14px}
-button:hover{filter:brightness(.96)}
-.primary{background:var(--blue);color:white}
-.secondary{background:#e8eef5;color:#29435e}
-.success{background:var(--green);color:white}
-.danger{background:#fce8e6;color:var(--red)}
-.table-wrap{overflow-x:auto}
-table{width:100%;border-collapse:collapse;font-size:13px}
-th,td{padding:10px 8px;border:1px solid var(--border);text-align:center}
-th{background:#edf2f7;color:#243c55}
-td.left{text-align:left}
-.summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-top:16px}
-.stat{background:#f4f7fa;border:1px solid var(--border);border-radius:8px;padding:14px}
-.stat span{display:block;font-size:12px;color:#667789;margin-bottom:7px}
-.stat strong{font-size:20px;color:var(--navy)}
-.notice{background:#fff8e6;border-left:4px solid #d69e26;padding:12px 14px;border-radius:5px;font-size:13px;line-height:1.5}
-.status{font-size:13px;margin-top:10px;color:var(--green)}
-.row-buttons{display:flex;gap:5px;justify-content:center}
-.row-buttons button{padding:6px 9px;font-size:12px}
-.layer-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:12px;align-items:end}
-.result-box{background:#eaf4ee;padding:14px;border-radius:8px;margin-top:14px}
-.result-box strong{font-size:22px;color:var(--green)}
-footer{color:#667789;font-size:12px;text-align:center;padding:16px}
-@media(max-width:800px){body{padding:10px}.grid,.layer-grid{grid-template-columns:1fr 1fr}.summary{grid-template-columns:1fr 1fr}}
-@media(max-width:520px){.grid,.layer-grid,.summary{grid-template-columns:1fr}}
-@page{size:A4 landscape;margin:12mm}
-@media print{
- body{background:white;padding:0}
- body *{visibility:hidden}
- #printDocument,#printDocument *{visibility:visible}
- #printDocument{display:block!important;position:absolute;left:0;top:0;width:100%;color:#111;font-family:Arial,sans-serif}
+:root {
+  --blue:#174a78;
+  --blue2:#23699f;
+  --bg:#f2f5f8;
+  --border:#d8e0e8;
+  --text:#243447;
+  --muted:#68798b;
+  --green:#238451;
+  --red:#bd4141;
 }
-#printDocument{display:none}
+* {box-sizing:border-box}
+body {
+  margin:0;
+  padding:22px;
+  background:var(--bg);
+  color:var(--text);
+  font-family:Arial,sans-serif;
+}
+.container {max-width:1450px;margin:auto}
+header {
+  background:linear-gradient(120deg,#143d63,#2875a9);
+  color:white;
+  padding:24px;
+  border-radius:12px;
+  margin-bottom:20px;
+}
+header h1 {margin:0 0 8px;font-size:25px}
+header p {margin:0;color:#dceaf5}
+.card {
+  background:white;
+  border:1px solid var(--border);
+  border-radius:10px;
+  padding:20px;
+  margin-bottom:18px;
+  box-shadow:0 2px 7px #182f4610;
+}
+h2 {
+  font-size:19px;
+  color:var(--blue);
+  margin:0 0 16px;
+  padding-bottom:10px;
+  border-bottom:1px solid var(--border);
+}
+h3 {font-size:16px;color:var(--blue);margin:18px 0 12px}
+.grid {
+  display:grid;
+  grid-template-columns:repeat(4,minmax(150px,1fr));
+  gap:13px;
+}
+.grid-3 {grid-template-columns:repeat(3,minmax(150px,1fr))}
+.grid-2 {grid-template-columns:repeat(2,minmax(150px,1fr))}
+.field {display:flex;flex-direction:column;gap:6px}
+label {font-size:13px;font-weight:bold;color:#46596d}
+input,select,textarea {
+  width:100%;
+  padding:10px;
+  border:1px solid #cbd5df;
+  border-radius:6px;
+  font-size:14px;
+  background:white;
+  color:var(--text);
+}
+input:focus,select:focus,textarea:focus {
+  outline:2px solid #8bbce0;
+  border-color:var(--blue2);
+}
+button {
+  border:0;
+  border-radius:6px;
+  padding:10px 15px;
+  font-weight:bold;
+  cursor:pointer;
+  font-size:13px;
+  margin:4px 3px 4px 0;
+}
+.primary {background:var(--blue2);color:white}
+.success {background:var(--green);color:white}
+.danger {background:var(--red);color:white}
+.secondary {background:#e7edf3;color:#30465b}
+button:hover {filter:brightness(.94)}
+.actions {margin-top:14px;display:flex;flex-wrap:wrap;gap:5px}
+.table-wrap {overflow-x:auto}
+table {
+  border-collapse:collapse;
+  width:100%;
+  min-width:750px;
+  font-size:13px;
+}
+th,td {
+  border:1px solid var(--border);
+  padding:9px;
+  text-align:center;
+}
+th {background:#eaf1f7;color:#23435f}
+td.left,th.left {text-align:left}
+.total-row {font-weight:bold;background:#f0f5f9}
+.summary {
+  display:grid;
+  grid-template-columns:repeat(4,minmax(130px,1fr));
+  gap:12px;
+  margin-top:14px;
+}
+.metric {
+  background:#f0f5f9;
+  border:1px solid var(--border);
+  border-radius:8px;
+  padding:13px;
+}
+.metric span {display:block;font-size:12px;color:var(--muted);margin-bottom:7px}
+.metric strong {font-size:19px;color:var(--blue)}
+.note {
+  background:#fff8e8;
+  border-left:4px solid #d69b2d;
+  padding:12px;
+  border-radius:5px;
+  font-size:13px;
+  line-height:1.5;
+  margin-top:12px;
+}
+.info {
+  background:#eef6fc;
+  border-left:4px solid #4389bd;
+  padding:12px;
+  border-radius:5px;
+  font-size:13px;
+  line-height:1.5;
+  margin-top:12px;
+}
+.layer-row {
+  display:grid;
+  grid-template-columns:2fr 1fr 1fr 1fr auto;
+  gap:8px;
+  align-items:end;
+  margin-bottom:9px;
+}
+.layer-row .field label {font-size:12px}
+.small-btn {padding:9px 11px}
+.empty {color:#8795a3;padding:15px;text-align:center}
+footer {font-size:12px;color:var(--muted);text-align:center;padding:12px}
+@media(max-width:900px) {
+  .grid,.grid-3,.grid-2,.summary {grid-template-columns:repeat(2,minmax(130px,1fr))}
+}
+@media(max-width:600px) {
+  body {padding:10px}
+  .grid,.grid-3,.grid-2,.summary {grid-template-columns:1fr}
+  .layer-row {grid-template-columns:1fr 1fr}
+  header h1 {font-size:21px}
+}
+@media print {
+  body {background:white;padding:0}
+  header {background:white;color:#111;border:1px solid #777}
+  header p {color:#333}
+  .no-print,button {display:none!important}
+  .card {box-shadow:none;break-inside:avoid;border:1px solid #aaa}
+  input,select {border:0;padding:2px}
+  .table-wrap {overflow:visible}
+  table {min-width:0;font-size:10px}
+  th,td {padding:5px}
+}
 </style>
 </head>
+
 <body>
-<div class="container" id="app">
+<div class="container">
 
 <header>
-<h1>Калькулятор строительных нагрузок</h1>
-<p>Расчёт нагрузок и собственного веса многослойных конструкций · Версия 1.5</p>
+  <h1>Инженерный калькулятор нагрузок</h1>
+  <p>Версия 1.6 · Расчёт нагрузок на площадь и погонных нагрузок</p>
 </header>
 
 <section class="card">
-<h2>1. Данные проекта</h2>
-<div class="grid">
-<div class="field"><label>Наименование объекта</label><input id="objectName" placeholder="Например, жилой дом"></div>
-<div class="field"><label>Адрес объекта</label><input id="objectAddress" placeholder="Город, адрес"></div>
-<div class="field"><label>Шифр проекта</label><input id="projectCode" placeholder="Шифр проекта"></div>
-<div class="field"><label>Стадия</label><select id="projectStage"><option>ЭП</option><option selected>РП</option><option>П</option><option>Р</option></select></div>
-<div class="field"><label>Раздел проекта</label><input id="projectSection" placeholder="КЖ, КМ, АР"></div>
-<div class="field"><label>Номер листа</label><input id="sheetNumber" placeholder="Номер листа"></div>
-<div class="field"><label>Составил</label><input id="author" placeholder="Ф.И.О."></div>
-<div class="field"><label>Проверил</label><input id="checkBy" placeholder="Ф.И.О."></div>
-<div class="field"><label>Дата</label><input id="calcDate" type="date"></div>
-</div>
+  <h2>1. Данные проекта</h2>
+  <div class="grid">
+    <div class="field">
+      <label>Наименование объекта</label>
+      <input id="projectName" placeholder="Наименование объекта">
+    </div>
+    <div class="field">
+      <label>Адрес объекта</label>
+      <input id="projectAddress" placeholder="Город, адрес">
+    </div>
+    <div class="field">
+      <label>Шифр проекта</label>
+      <input id="projectCode" placeholder="Шифр">
+    </div>
+    <div class="field">
+      <label>Стадия</label>
+      <select id="projectStage">
+        <option>ЭП</option>
+        <option selected>РП</option>
+        <option>Р</option>
+        <option>П</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Раздел</label>
+      <input id="projectSection" placeholder="КЖ, КМ, АР">
+    </div>
+    <div class="field">
+      <label>Номер листа</label>
+      <input id="sheetNumber" placeholder="Лист">
+    </div>
+    <div class="field">
+      <label>Разработал</label>
+      <input id="author" placeholder="Ф.И.О.">
+    </div>
+    <div class="field">
+      <label>Проверил</label>
+      <input id="checker" placeholder="Ф.И.О.">
+    </div>
+    <div class="field">
+      <label>Дата расчёта</label>
+      <input id="projectDate" type="date">
+    </div>
+  </div>
+  <div class="actions no-print">
+    <button class="primary" onclick="saveProject()">Сохранить данные проекта</button>
+    <button class="secondary" onclick="loadProject()">Загрузить сохранённые данные</button>
+  </div>
 </section>
 
 <section class="card">
-<h2>2. Параметры расчёта</h2>
-<div class="grid">
-<div class="field"><label>Расчётная площадь, м²</label><input id="area" type="number" min="0" step="0.01" placeholder="100"></div>
-<div class="field"><label>Расположение / оси</label><input id="location" placeholder="Оси А-Б / 1-3"></div>
-<div class="field"><label>Этаж / помещение</label><input id="floor" placeholder="Например, 2 этаж"></div>
-</div>
+  <h2>2. Нагрузки на площадь</h2>
+  <div class="grid">
+    <div class="field">
+      <label>Наименование нагрузки</label>
+      <input id="loadName" placeholder="Например, кирпичная кладка">
+    </div>
+    <div class="field">
+      <label>Категория</label>
+      <select id="loadCategory">
+        <option>Постоянная</option>
+        <option>Временная длительная</option>
+        <option>Временная кратковременная</option>
+        <option>Особая</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Материал</label>
+      <select id="material" onchange="updateMaterial()">
+        <option value="custom">Ручной ввод</option>
+        <option value="brick">Кирпичная кладка</option>
+        <option value="concrete">Железобетон</option>
+        <option value="slab">Ж/б плита перекрытия</option>
+        <option value="screed">Цементная стяжка</option>
+        <option value="mortar">Раствор цементный</option>
+        <option value="gas">Газобетон</option>
+        <option value="wool">Минеральная вата</option>
+        <option value="ceramic">Керамический кирпич</option>
+        <option value="wood">Древесина</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Плотность, кг/м³</label>
+      <input id="density" type="number" step="any" value="1800">
+    </div>
+    <div class="field">
+      <label>Толщина, мм</label>
+      <input id="thickness" type="number" step="any" value="380">
+    </div>
+    <div class="field">
+      <label>Нагрузка по площади, кг/м²</label>
+      <input id="areaLoad" type="number" step="any" placeholder="Для готовой нагрузки">
+    </div>
+    <div class="field">
+      <label>Коэффициент надёжности γf</label>
+      <input id="gamma" type="number" step="any" value="1.1">
+    </div>
+    <div class="field">
+      <label>Площадь, м²</label>
+      <input id="loadArea" type="number" step="any" placeholder="Площадь приложения">
+    </div>
+    <div class="field">
+      <label>Расположение / оси</label>
+      <input id="loadLocation" placeholder="Например, оси 1–2 / А–Б">
+    </div>
+    <div class="field">
+      <label>Этаж / помещение</label>
+      <input id="loadFloor" placeholder="Например, 2 этаж">
+    </div>
+    <div class="field">
+      <label>Примечание</label>
+      <input id="loadNote" placeholder="Дополнительная информация">
+    </div>
+  </div>
+  <div class="info">
+    Для материала с объёмной плотностью используется толщина слоя.
+    Если известна готовая нагрузка в кг/м², заполните соответствующее поле.
+    При выборе материала плотность и коэффициент заполняются автоматически,
+    но их можно изменить вручную.
+  </div>
+  <div class="actions no-print">
+    <button class="primary" onclick="addAreaLoad()">Добавить нагрузку</button>
+    <button class="secondary" onclick="clearAreaForm()">Очистить поля</button>
+  </div>
+
+  <h3>Ведомость нагрузок на площадь</h3>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>№</th>
+          <th>Наименование</th>
+          <th>Категория</th>
+          <th>Материал</th>
+          <th>qn, кН/м²</th>
+          <th>γf</th>
+          <th>qd, кН/м²</th>
+          <th>Площадь, м²</th>
+          <th>Сила, кН</th>
+          <th class="no-print">Действия</th>
+        </tr>
+      </thead>
+      <tbody id="areaTable">
+        <tr><td colspan="10" class="empty">Нагрузки пока не добавлены</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="summary">
+    <div class="metric"><span>Сумма постоянных qd</span><strong id="areaPermanent">0.00</strong> кН/м²</div>
+    <div class="metric"><span>Сумма временных qd</span><strong id="areaVariable">0.00</strong> кН/м²</div>
+    <div class="metric"><span>Общая сумма qd</span><strong id="areaTotal">0.00</strong> кН/м²</div>
+    <div class="metric"><span>Суммарная сила</span><strong id="areaForce">0.00</strong> кН</div>
+  </div>
 </section>
 
 <section class="card">
-<h2>3. Расчёт многослойной стены</h2>
-<p class="hint">Добавляй слои по порядку от внутренней поверхности стены к наружной. Вес каждого слоя рассчитывается по его плотности и толщине.</p>
+  <h2>3. Расчёт многослойной стены</h2>
+  <p style="font-size:13px;color:#68798b">
+    Каждый слой рассчитывается отдельно. Воздушная прослойка учитывается в толщине стены,
+    но не добавляет собственного веса.
+  </p>
 
-<div class="panel">
-<h3>Состав стены</h3>
-<div class="layer-grid">
-<div class="field">
-<label>Материал слоя</label>
-<select id="layerMaterial">
-<option value="silicate">Силикатный кирпич</option>
-<option value="ceramic">Керамический кирпич</option>
-<option value="gasblock">Газобетон</option>
-<option value="concrete">Железобетон</option>
-<option value="minwool">Минеральная вата</option>
-<option value="plaster">Штукатурка цементная</option>
-<option value="screed">Цементная стяжка</option>
-<option value="air">Воздушная прослойка</option>
-<option value="custom">Другой материал</option>
-</select>
-</div>
-<div class="field">
-<label>Толщина, мм</label>
-<input id="layerThickness" type="number" min="0" step="1" value="380">
-</div>
-<div class="field">
-<label>Плотность, кг/м³</label>
-<input id="layerDensity" type="number" min="0" step="1" value="1800">
-</div>
-<div class="field">
-<label>Коэффициент γf</label>
-<input id="layerGamma" type="number" min="0" step="0.01" value="1.1">
-</div>
-</div>
-<div class="actions">
-<button class="primary" id="addLayerBtn" type="button">Добавить слой</button>
-<button class="secondary" id="resetWallBtn" type="button">Вернуть исходную стену</button>
-</div>
-</div>
+  <div id="layers"></div>
+  <div class="actions no-print">
+    <button class="secondary" onclick="addLayer()">Добавить слой</button>
+    <button class="primary" onclick="calculateWall()">Пересчитать стену</button>
+  </div>
 
-<div class="table-wrap" style="margin-top:16px">
-<table>
-<thead><tr>
-<th>№</th><th>Материал слоя</th><th>Толщина, мм</th><th>Плотность, кг/м³</th><th>γf</th><th>qn, кН/м²</th><th>qd, кН/м²</th><th class="no-print">Действия</th>
-</tr></thead>
-<tbody id="layersBody"></tbody>
-</table>
-</div>
+  <div class="grid grid-3" style="margin-top:18px">
+    <div class="field">
+      <label>Высота стены h, м</label>
+      <input id="wallHeight" type="number" step="any" value="3.0" oninput="calculateWall()">
+    </div>
+    <div class="field">
+      <label>Длина стены L, м</label>
+      <input id="wallLength" type="number" step="any" value="6.0" oninput="calculateWall()">
+    </div>
+    <div class="field">
+      <label>Количество одинаковых стен n</label>
+      <input id="wallCount" type="number" step="1" min="1" value="1" oninput="calculateWall()">
+    </div>
+  </div>
 
-<div class="summary">
-<div class="stat"><span>Общая толщина стены</span><strong id="wallThickness">0</strong><small>мм</small></div>
-<div class="stat"><span>Нормативный вес стены</span><strong id="wallQn">0.00</strong><small>кН/м²</small></div>
-<div class="stat"><span>Расчётный вес стены</span><strong id="wallQd">0.00</strong><small>кН/м²</small></div>
-<div class="stat"><span>Количество слоёв</span><strong id="layerCount">0</strong><small>слоёв</small></div>
-</div>
+  <div class="summary">
+    <div class="metric"><span>Общая толщина стены</span><strong id="wallThickness">0</strong> мм</div>
+    <div class="metric"><span>Нормативная нагрузка qn</span><strong id="wallQn">0.00</strong> кН/м²</div>
+    <div class="metric"><span>Расчётная нагрузка qd</span><strong id="wallQd">0.00</strong> кН/м²</div>
+    <div class="metric"><span>Погонная расчётная нагрузка</span><strong id="wallLineQd">0.00</strong> кН/м</div>
+    <div class="metric"><span>Погонная нормативная нагрузка</span><strong id="wallLineQn">0.00</strong> кН/м</div>
+    <div class="metric"><span>Суммарная расчётная сила</span><strong id="wallForce">0.00</strong> кН</div>
+    <div class="metric"><span>Суммарная нормативная сила</span><strong id="wallForceN">0.00</strong> кН</div>
+  </div>
 
-<div class="grid" style="margin-top:14px">
-<div class="field"><label>Наименование стены</label><input id="wallName" value="Наружная многослойная стена"></div>
-<div class="field"><label>Категория нагрузки</label><select id="wallCategory"><option>Постоянная</option><option>Временная</option></select></div>
-<div class="field"><label>Примечание</label><input id="wallNote" placeholder="Например, наружная стена"></div>
-</div>
-<div class="actions">
-<button class="success" id="addWallToLoads" type="button">Добавить стену в общую ведомость</button>
-</div>
-<div class="status" id="wallStatus"></div>
+  <div class="info">
+    Формулы:
+    <br>qn слоя = ρ × t × 9,81 / 1000, кН/м²;
+    <br>qd стены = сумма расчётных нагрузок слоёв;
+    <br>N = q × h, кН/м;
+    <br>F = N × L × n, кН.
+  </div>
+
+  <div class="actions no-print">
+    <button class="success" onclick="addWallToLineLoads()">Добавить стену в ведомость погонных нагрузок</button>
+  </div>
 </section>
 
 <section class="card">
-<h2>4. Добавление отдельной нагрузки</h2>
-<div class="grid">
-<div class="field"><label>Наименование нагрузки</label><input id="loadName" placeholder="Например, наружная стена"></div>
-<div class="field"><label>Категория нагрузки</label><select id="loadCategory"><option>Постоянная</option><option>Временная</option></select></div>
-<div class="field"><label>Материал / тип нагрузки</label>
-<select id="material">
-<option value="manual">Ручной ввод</option>
-<option value="brick">Кирпичная кладка — 1800 кг/м³</option>
-<option value="concrete">Железобетон — 2500 кг/м³</option>
-<option value="slab">Ж/б плита — 300 кг/м²</option>
-<option value="screed">Цементная стяжка — 2000 кг/м³</option>
-<option value="mortar">Цементно-песчаный раствор — 1800 кг/м³</option>
-<option value="gasblock">Газобетон — 600 кг/м³</option>
-<option value="minwool">Минеральная вата — 100 кг/м³</option>
-<option value="ceramic">Керамический кирпич — 1400 кг/м³</option>
-<option value="wood">Древесина — 500 кг/м³</option>
-<option value="custom_area">Другая нагрузка, кг/м²</option>
-<option value="custom_volume">Другой материал, кг/м³</option>
-</select>
-</div>
-</div>
+  <h2>4. Дополнительные погонные нагрузки</h2>
+  <div class="grid">
+    <div class="field">
+      <label>Наименование</label>
+      <input id="lineName" placeholder="Например, перегородка">
+    </div>
+    <div class="field">
+      <label>Категория</label>
+      <select id="lineCategory">
+        <option>Постоянная</option>
+        <option>Временная длительная</option>
+        <option>Временная кратковременная</option>
+        <option>Особая</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Нормативная нагрузка qn, кН/м</label>
+      <input id="lineQn" type="number" step="any" placeholder="0.00">
+    </div>
+    <div class="field">
+      <label>Коэффициент надёжности γf</label>
+      <input id="lineGamma" type="number" step="any" value="1.1">
+    </div>
+    <div class="field">
+      <label>Длина, м</label>
+      <input id="lineLength" type="number" step="any" placeholder="0.00">
+    </div>
+    <div class="field">
+      <label>Количество</label>
+      <input id="lineCount" type="number" step="1" min="1" value="1">
+    </div>
+    <div class="field">
+      <label>Расположение / оси</label>
+      <input id="lineLocation" placeholder="Оси А–Б">
+    </div>
+    <div class="field">
+      <label>Примечание</label>
+      <input id="lineNote" placeholder="Дополнительная информация">
+    </div>
+  </div>
+  <div class="actions no-print">
+    <button class="primary" onclick="addManualLineLoad()">Добавить погонную нагрузку</button>
+  </div>
 
-<div class="panel">
-<div class="grid">
-<div class="field"><label id="quantityLabel">Толщина стены, мм</label><input id="materialQuantity" type="number" min="0" step="1" value="380"></div>
-<div class="field"><label>Плотность / нагрузка</label><input id="density" type="number" min="0" step="0.01" value="1800"><small id="densityUnit">кг/м³</small></div>
-<div class="field"><label>Коэффициент γf</label><input id="gamma" type="number" min="0" step="0.01" value="1.1"></div>
-</div>
-<p class="hint" id="materialResult"></p>
-</div>
-
-<div class="grid" style="margin-top:14px">
-<div class="field"><label>Нормативная нагрузка qn, кН/м²</label><input id="manualQ" type="number" min="0" step="0.001"></div>
-<div class="field"><label>Примечание</label><input id="loadNote" placeholder="Дополнительная информация"></div>
-<div class="field"><label>Источник значения</label><input id="loadSource" placeholder="Норматив, паспорт, проект"></div>
-</div>
-<div class="actions">
-<button class="primary" id="saveLoadBtn" type="button">Добавить нагрузку</button>
-<button class="secondary" id="cancelEditBtn" type="button" style="display:none">Отмена редактирования</button>
-</div>
-<div class="status" id="status"></div>
+  <h3>Ведомость погонных нагрузок</h3>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>№</th>
+          <th>Наименование</th>
+          <th>Категория</th>
+          <th>qn, кН/м</th>
+          <th>γf</th>
+          <th>qd, кН/м</th>
+          <th>Длина, м</th>
+          <th>Кол-во</th>
+          <th>Сила, кН</th>
+          <th class="no-print">Действия</th>
+        </tr>
+      </thead>
+      <tbody id="lineTable">
+        <tr><td colspan="10" class="empty">Погонные нагрузки пока не добавлены</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="summary">
+    <div class="metric"><span>Сумма постоянных qd</span><strong id="linePermanent">0.00</strong> кН/м</div>
+    <div class="metric"><span>Сумма временных qd</span><strong id="lineVariable">0.00</strong> кН/м</div>
+    <div class="metric"><span>Общая сумма qd</span><strong id="lineTotal">0.00</strong> кН/м</div>
+    <div class="metric"><span>Суммарная сила</span><strong id="lineForce">0.00</strong> кН</div>
+  </div>
+  <div class="note">
+    Погонные нагрузки суммируются в этой ведомости арифметически.
+    Для расчёта конструкций необходимо учитывать фактическое расположение нагрузок,
+    пролёты, схемы опирания и нормативные сочетания.
+  </div>
 </section>
 
 <section class="card">
-<h2>5. Общая ведомость нагрузок</h2>
-<div class="table-wrap">
-<table>
-<thead><tr>
-<th>№</th><th>Наименование</th><th>Материал</th><th>Категория</th><th>qn, кН/м²</th><th>γf</th><th>qd, кН/м²</th><th>Примечание</th><th class="no-print">Действия</th>
-</tr></thead>
-<tbody id="loadsBody"><tr><td colspan="9">Нагрузки пока не добавлены</td></tr></tbody>
-</table>
-</div>
-<div class="summary">
-<div class="stat"><span>Постоянные нагрузки</span><strong id="sumPermanent">0.00</strong><small>кН/м²</small></div>
-<div class="stat"><span>Временные нагрузки</span><strong id="sumVariable">0.00</strong><small>кН/м²</small></div>
-<div class="stat"><span>Общая расчётная нагрузка</span><strong id="sumTotal">0.00</strong><small>кН/м²</small></div>
-<div class="stat"><span>Полная сила на площадь</span><strong id="sumForce">0.00</strong><small>кН</small></div>
-</div>
-<div class="actions no-print">
-<button class="success" id="excelBtn" type="button">Экспорт в Excel</button>
-<button class="primary" id="printBtn" type="button">Печать ведомости / PDF</button>
-<button class="secondary" id="clearBtn" type="button">Очистить нагрузки</button>
-</div>
+  <h2>5. Экспорт и печать</h2>
+  <div class="actions no-print">
+    <button class="success" onclick="exportExcel()">Выгрузить в Excel</button>
+    <button class="primary" onclick="window.print()">Печать / Сохранить PDF</button>
+    <button class="secondary" onclick="clearAll()">Очистить расчётные таблицы</button>
+  </div>
+  <div class="note">
+    Excel содержит отдельные листы: «Нагрузки на площадь», «Погонные нагрузки» и «Слои стены».
+  </div>
 </section>
 
-<section class="card">
-<h2>6. Важные примечания</h2>
-<div class="notice">
-Плотности материалов являются предварительными справочными значениями. Уточняй их по фактическим характеристикам материалов, проекту и нормативной документации РК. Для многослойной стены программа рассчитывает собственный вес слоёв на 1 м² поверхности стены. Воздушная прослойка учитывается в общей толщине, но не имеет собственного веса. Коэффициенты надёжности проверяются по назначению нагрузки и действующим нормам. Калькулятор не формирует нормативные сочетания нагрузок и не заменяет расчёт несущих конструкций.
+<footer>
+  Инженерный калькулятор нагрузок · Версия 1.6
+</footer>
 </div>
-</section>
-<footer>Инженерный калькулятор нагрузок · Версия 1.5</footer>
-</div>
-
-<div id="printDocument"></div>
 
 <script>
-const $=id=>document.getElementById(id);
-const G=9.81;
-let loads=[];
-let layers=[];
-let editIndex=-1;
+const G = 9.81;
+let areaLoads = [];
+let lineLoads = [];
+let layers = [];
+let wallResult = {qn:0, qd:0, thickness:0, lineQn:0, lineQd:0, forceN:0, force:0};
 
-const materialPresets={
-silicate:{name:"Силикатный кирпич",density:1800},
-ceramic:{name:"Керамический кирпич",density:1400},
-gasblock:{name:"Газобетон",density:600},
-concrete:{name:"Железобетон",density:2500},
-minwool:{name:"Минеральная вата",density:100},
-plaster:{name:"Цементная штукатурка",density:1800},
-screed:{name:"Цементная стяжка",density:2000},
-air:{name:"Воздушная прослойка",density:0},
-custom:{name:"Другой материал",density:1000}
+const materials = {
+  brick:{name:"Кирпичная кладка",density:1800,gamma:1.1},
+  concrete:{name:"Железобетон",density:2500,gamma:1.1},
+  slab:{name:"Ж/б плита перекрытия",density:0,gamma:1.1},
+  screed:{name:"Цементная стяжка",density:2000,gamma:1.1},
+  mortar:{name:"Цементный раствор",density:1800,gamma:1.1},
+  gas:{name:"Газобетон",density:600,gamma:1.1},
+  wool:{name:"Минеральная вата",density:100,gamma:1.1},
+  ceramic:{name:"Керамический кирпич",density:1400,gamma:1.1},
+  wood:{name:"Древесина",density:500,gamma:1.1}
 };
 
-const presets={
-manual:{name:"Ручной ввод",density:0,gamma:1.1,mode:"manual",label:"Нормативная нагрузка",unit:"кН/м²"},
-brick:{name:"Кирпичная кладка",density:1800,gamma:1.1,mode:"volume",label:"Толщина стены, мм",unit:"кг/м³"},
-concrete:{name:"Железобетон",density:2500,gamma:1.1,mode:"volume",label:"Толщина слоя, мм",unit:"кг/м³"},
-slab:{name:"Ж/б плита",density:300,gamma:1.1,mode:"area",label:"Нагрузка на площадь",unit:"кг/м²"},
-screed:{name:"Цементная стяжка",density:2000,gamma:1.1,mode:"volume",label:"Толщина слоя, мм",unit:"кг/м³"},
-mortar:{name:"Цементно-песчаный раствор",density:1800,gamma:1.1,mode:"volume",label:"Толщина слоя, мм",unit:"кг/м³"},
-gasblock:{name:"Газобетон",density:600,gamma:1.1,mode:"volume",label:"Толщина стены, мм",unit:"кг/м³"},
-minwool:{name:"Минеральная вата",density:100,gamma:1.1,mode:"volume",label:"Толщина слоя, мм",unit:"кг/м³"},
-ceramic:{name:"Керамический кирпич",density:1400,gamma:1.1,mode:"volume",label:"Толщина стены, мм",unit:"кг/м³"},
-wood:{name:"Древесина",density:500,gamma:1.1,mode:"volume",label:"Толщина слоя, мм",unit:"кг/м³"},
-custom_area:{name:"Другая нагрузка",density:0,gamma:1.1,mode:"area",label:"Нагрузка",unit:"кг/м²"},
-custom_volume:{name:"Другой материал",density:0,gamma:1.1,mode:"volume",label:"Толщина слоя, мм",unit:"кг/м³"}
-};
-
-function num(id){let v=parseFloat($(id).value);return Number.isFinite(v)?v:0}
-function fmt(v){return Number(v).toLocaleString("ru-RU",{minimumFractionDigits:2,maximumFractionDigits:2})}
-function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
-
-function defaultWall(){
-layers=[
-{material:"Силикатный кирпич",thickness:380,density:1800,gamma:1.1},
-{material:"Минеральная вата",thickness:100,density:100,gamma:1.1},
-{material:"Воздушная прослойка",thickness:40,density:0,gamma:1.1},
-{material:"Керамический кирпич",thickness:120,density:1400,gamma:1.1}
-];
-renderLayers();
+function num(id) {
+  const value = parseFloat(document.getElementById(id).value);
+  return Number.isFinite(value) ? value : 0;
+}
+function fmt(value) {
+  return (Number.isFinite(value) ? value : 0).toFixed(2);
+}
+function escapeHTML(value) {
+  return String(value ?? "").replace(/[&<>"']/g, c => ({
+    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+  }[c]));
 }
 
-function layerWeight(x){return x.density*(x.thickness/1000)*G/1000}
-function wallTotals(){
-let qn=0,qd=0,thickness=0;
-layers.forEach(x=>{let q=layerWeight(x);qn+=q;qd+=q*x.gamma;thickness+=x.thickness});
-return {qn,qd,thickness};
+function updateMaterial() {
+  const key = document.getElementById("material").value;
+  if (materials[key]) {
+    document.getElementById("density").value = materials[key].density;
+    document.getElementById("gamma").value = materials[key].gamma;
+    document.getElementById("areaLoad").value = "";
+    if (key === "slab") {
+      document.getElementById("areaLoad").value = 300;
+      document.getElementById("thickness").value = "";
+    }
+  }
 }
 
-function renderLayers(){
-let body=$("layersBody");
-body.innerHTML="";
-layers.forEach((x,i)=>{
-let tr=document.createElement("tr");
-let vals=[i+1,x.material,x.thickness,x.density,fmt(x.gamma),fmt(layerWeight(x)),fmt(layerWeight(x)*x.gamma)];
-vals.forEach((v,j)=>{
-let td=document.createElement("td");td.textContent=v;
-if(j===1)td.className="left";
-tr.appendChild(td);
-});
-let td=document.createElement("td");td.className="no-print";
-let wrap=document.createElement("div");wrap.className="row-buttons";
-let edit=document.createElement("button");edit.className="secondary";edit.textContent="Изменить";
-edit.onclick=()=>editLayer(i);
-let del=document.createElement("button");del.className="danger";del.textContent="Удалить";
-del.onclick=()=>{layers.splice(i,1);renderLayers()};
-wrap.append(edit,del);td.appendChild(wrap);tr.appendChild(td);body.appendChild(tr);
-});
-let t=wallTotals();
-$("wallThickness").textContent=fmt(t.thickness);
-$("wallQn").textContent=fmt(t.qn);
-$("wallQd").textContent=fmt(t.qd);
-$("layerCount").textContent=layers.length;
+function clearAreaForm() {
+  ["loadName","areaLoad","loadArea","loadLocation","loadFloor","loadNote"].forEach(id => {
+    document.getElementById(id).value = "";
+  });
+  document.getElementById("material").value = "custom";
+  document.getElementById("density").value = 1800;
+  document.getElementById("thickness").value = 0;
+  document.getElementById("gamma").value = 1.1;
+  document.getElementById("loadCategory").value = "Постоянная";
 }
 
-function editLayer(i){
-let x=layers[i];
-let materialKey=Object.keys(materialPresets).find(k=>materialPresets[k].name===x.material)||"custom";
-$("layerMaterial").value=materialKey;
-$("layerThickness").value=x.thickness;
-$("layerDensity").value=x.density;
-$("layerGamma").value=x.gamma;
-$("addLayerBtn").textContent="Сохранить слой";
-$("addLayerBtn").dataset.edit=String(i);
-window.scrollTo({top:0,behavior:"smooth"});
+function addAreaLoad() {
+  const name = document.getElementById("loadName").value.trim();
+  const category = document.getElementById("loadCategory").value;
+  const materialKey = document.getElementById("material").value;
+  const materialName = materials[materialKey]?.name || "Ручной ввод";
+  const density = num("density");
+  const thickness = num("thickness");
+  const areaLoadKg = num("areaLoad");
+  const gamma = num("gamma");
+  const area = num("loadArea");
+
+  if (!name) return alert("Укажите наименование нагрузки.");
+  if (gamma <= 0) return alert("Коэффициент надёжности должен быть больше нуля.");
+
+  let qn;
+  if (document.getElementById("areaLoad").value.trim() !== "") {
+    if (areaLoadKg < 0) return alert("Нагрузка не может быть отрицательной.");
+    qn = areaLoadKg * G / 1000;
+  } else {
+    if (density < 0 || thickness < 0) return alert("Проверьте плотность и толщину.");
+    qn = density * thickness / 1000 * G / 1000;
+  }
+
+  areaLoads.push({
+    name,category,material:materialName,qn,gamma,qd:qn*gamma,
+    area,location:document.getElementById("loadLocation").value,
+    floor:document.getElementById("loadFloor").value,
+    note:document.getElementById("loadNote").value
+  });
+  renderAreaLoads();
+  clearAreaForm();
 }
 
-function addLayer(){
-let thickness=num("layerThickness"),density=num("layerDensity"),gamma=num("layerGamma");
-if(thickness<0||density<0||gamma<=0){alert("Проверь толщину, плотность и коэффициент.");return}
-let key=$("layerMaterial").value;
-let name=materialPresets[key].name;
-let item={material:name,thickness,density,gamma};
-let edit=$("addLayerBtn").dataset.edit;
-if(edit!==undefined){layers[Number(edit)]=item;delete $("addLayerBtn").dataset.edit;$("addLayerBtn").textContent="Добавить слой"}
-else layers.push(item);
-renderLayers();
+function renderAreaLoads() {
+  const tbody = document.getElementById("areaTable");
+  if (!areaLoads.length) {
+    tbody.innerHTML = '<tr><td colspan="10" class="empty">Нагрузки пока не добавлены</td></tr>';
+  } else {
+    tbody.innerHTML = areaLoads.map((x,i) => `
+      <tr>
+        <td>${i+1}</td>
+        <td class="left">${escapeHTML(x.name)}<br><small>${escapeHTML(x.location || "")}</small></td>
+        <td>${escapeHTML(x.category)}</td>
+        <td>${escapeHTML(x.material)}</td>
+        <td>${fmt(x.qn)}</td>
+        <td>${fmt(x.gamma)}</td>
+        <td>${fmt(x.qd)}</td>
+        <td>${fmt(x.area)}</td>
+        <td>${fmt(x.qd*x.area)}</td>
+        <td class="no-print">
+          <button class="secondary small-btn" onclick="editAreaLoad(${i})">Изменить</button>
+          <button class="danger small-btn" onclick="deleteAreaLoad(${i})">Удалить</button>
+        </td>
+      </tr>`).join("");
+  }
+
+  let permanent=0, variable=0, force=0;
+  areaLoads.forEach(x => {
+    if (x.category === "Постоянная") permanent += x.qd;
+    else variable += x.qd;
+    force += x.qd*x.area;
+  });
+  document.getElementById("areaPermanent").textContent=fmt(permanent);
+  document.getElementById("areaVariable").textContent=fmt(variable);
+  document.getElementById("areaTotal").textContent=fmt(permanent+variable);
+  document.getElementById("areaForce").textContent=fmt(force);
 }
 
-function updateLayerMaterial(){
-let p=materialPresets[$("layerMaterial").value];
-$("layerDensity").value=p.density;
+function editAreaLoad(i) {
+  const x=areaLoads[i];
+  const newName=prompt("Наименование нагрузки:",x.name);
+  if (newName===null) return;
+  const newGamma=prompt("Коэффициент надёжности γf:",x.gamma);
+  if (newGamma===null) return;
+  const newArea=prompt("Площадь, м²:",x.area);
+  if (newArea===null) return;
+  const gamma=parseFloat(newGamma), area=parseFloat(newArea);
+  if (!Number.isFinite(gamma)||gamma<=0||!Number.isFinite(area)||area<0) {
+    alert("Проверьте введённые значения."); return;
+  }
+  x.name=newName.trim() || x.name;
+  x.gamma=gamma;
+  x.area=area;
+  x.qd=x.qn*gamma;
+  renderAreaLoads();
+}
+function deleteAreaLoad(i) {
+  if(confirm("Удалить эту нагрузку?")) {
+    areaLoads.splice(i,1);
+    renderAreaLoads();
+  }
 }
 
-function addWall(){
-if(!layers.length){alert("Добавь хотя бы один слой стены.");return}
-let t=wallTotals();
-if(t.thickness<=0||t.qn<=0){alert("Толщина и вес стены должны быть больше нуля.");return}
-loads.push({
-name:$("wallName").value.trim()||"Многослойная стена",
-category:$("wallCategory").value,
-material:"Многослойная конструкция ("+layers.length+" сл.)",
-qn:t.qn,gamma:t.qn>0?t.qd/t.qn:1.1,qd:t.qd,
-note:$("wallNote").value.trim()+"; толщина "+fmt(t.thickness)+" мм",
-source:"Расчёт по слоям стены"
-});
-renderLoads();
-$("wallStatus").textContent="Многослойная стена добавлена в общую ведомость.";
+function addLayer(data={}) {
+  layers.push({
+    name:data.name || "Новый слой",
+    thickness:data.thickness ?? 100,
+    density:data.density ?? 100,
+    gamma:data.gamma ?? 1.1
+  });
+  renderLayers();
+  calculateWall();
+}
+function removeLayer(i) {
+  layers.splice(i,1);
+  renderLayers();
+  calculateWall();
+}
+function updateLayer(i,key,value) {
+  layers[i][key] = key==="name" ? value : (parseFloat(value)||0);
+  calculateWall();
+}
+function renderLayers() {
+  const root=document.getElementById("layers");
+  if (!layers.length) {
+    root.innerHTML='<p class="empty">Слои не добавлены. Добавьте слои стены.</p>';
+    return;
+  }
+  root.innerHTML=layers.map((x,i)=>`
+    <div class="layer-row">
+      <div class="field">
+        <label>Слой ${i+1} — наименование</label>
+        <input value="${escapeHTML(x.name)}" onchange="updateLayer(${i},'name',this.value)">
+      </div>
+      <div class="field">
+        <label>Толщина, мм</label>
+        <input type="number" step="any" value="${x.thickness}" oninput="updateLayer(${i},'thickness',this.value)">
+      </div>
+      <div class="field">
+        <label>Плотность, кг/м³</label>
+        <input type="number" step="any" value="${x.density}" oninput="updateLayer(${i},'density',this.value)">
+      </div>
+      <div class="field">
+        <label>γf</label>
+        <input type="number" step="any" value="${x.gamma}" oninput="updateLayer(${i},'gamma',this.value)">
+      </div>
+      <button class="danger small-btn no-print" onclick="removeLayer(${i})">Удалить</button>
+    </div>`).join("");
 }
 
-function selectedPreset(){return presets[$("material").value]||presets.manual}
-function updateMaterial(){
-let p=selectedPreset();
-$("quantityLabel").textContent=p.label;
-$("densityUnit").textContent=p.unit;
-$("density").value=p.density||"";
-$("gamma").value=p.gamma;
-$("materialQuantity").disabled=p.mode==="manual";
-$("density").disabled=p.mode==="manual";
-$("materialQuantity").value=p.mode==="volume"?380:"";
-$("manualQ").value="";
-calculateMaterial();
+function calculateWall() {
+  let qn=0, qd=0, thickness=0;
+  layers.forEach(x => {
+    thickness += x.thickness;
+    const layerQn=x.density*(x.thickness/1000)*G/1000;
+    qn += layerQn;
+    qd += layerQn*x.gamma;
+  });
+  const h=num("wallHeight");
+  const L=num("wallLength");
+  const n=Math.max(0,num("wallCount"));
+  const lineQn=qn*h;
+  const lineQd=qd*h;
+  const forceN=lineQn*L*n;
+  const force=lineQd*L*n;
+
+  wallResult={qn,qd,thickness,lineQn,lineQd,forceN,force};
+  document.getElementById("wallThickness").textContent=fmt(thickness);
+  document.getElementById("wallQn").textContent=fmt(qn);
+  document.getElementById("wallQd").textContent=fmt(qd);
+  document.getElementById("wallLineQn").textContent=fmt(lineQn);
+  document.getElementById("wallLineQd").textContent=fmt(lineQd);
+  document.getElementById("wallForceN").textContent=fmt(forceN);
+  document.getElementById("wallForce").textContent=fmt(force);
 }
 
-function calculateMaterial(){
-let p=selectedPreset(),q=0;
-if(p.mode==="volume")q=num("density")*num("materialQuantity")/1000*G/1000;
-else if(p.mode==="area")q=num("density")*G/1000;
-else{$("materialResult").textContent="Нормативное значение вводится вручную.";return}
-$("manualQ").value=q?q.toFixed(3):"";
-$("materialResult").textContent="qn = "+fmt(q)+" кН/м²; qd = "+fmt(q*num("gamma"))+" кН/м².";
+function addWallToLineLoads() {
+  calculateWall();
+  const h=num("wallHeight"), L=num("wallLength"), n=num("wallCount");
+  if (h<=0||L<=0||n<=0) return alert("Укажите положительные значения высоты, длины и количества стен.");
+  if (wallResult.qd<=0) return alert("Добавьте слои стены с ненулевой плотностью и толщиной.");
+  lineLoads.push({
+    name:"Многослойная стена",
+    category:"Постоянная",
+    qn:wallResult.lineQn,
+    gamma:wallResult.qd/wallResult.qn,
+    qd:wallResult.lineQd,
+    length:L,
+    count:n,
+    location:"",
+    note:"Стена: "+fmt(wallResult.thickness)+" мм; высота "+fmt(h)+" м"
+  });
+  renderLineLoads();
+  alert("Стена добавлена в ведомость погонных нагрузок.");
 }
 
-function resetEntry(){
-editIndex=-1;
-["loadName","manualQ","loadNote","loadSource"].forEach(id=>$(id).value="");
-$("loadCategory").value="Постоянная";
-$("material").value="manual";
-$("saveLoadBtn").textContent="Добавить нагрузку";
-$("cancelEditBtn").style.display="none";
-updateMaterial();
+function addManualLineLoad() {
+  const name=document.getElementById("lineName").value.trim();
+  const category=document.getElementById("lineCategory").value;
+  const qn=num("lineQn");
+  const gamma=num("lineGamma");
+  const length=num("lineLength");
+  const count=num("lineCount");
+  if (!name) return alert("Укажите наименование погонной нагрузки.");
+  if (qn<0||gamma<=0||length<0||count<=0) return alert("Проверьте значения нагрузки, коэффициента, длины и количества.");
+  lineLoads.push({
+    name,category,qn,gamma,qd:qn*gamma,length,count,
+    location:document.getElementById("lineLocation").value,
+    note:document.getElementById("lineNote").value
+  });
+  renderLineLoads();
+  ["lineName","lineQn","lineLength","lineLocation","lineNote"].forEach(id=>document.getElementById(id).value="");
+  document.getElementById("lineGamma").value=1.1;
+  document.getElementById("lineCount").value=1;
+  document.getElementById("lineCategory").value="Постоянная";
 }
 
-function addOrUpdateLoad(){
-let name=$("loadName").value.trim(),qn=num("manualQ"),gamma=num("gamma");
-if(!name){alert("Укажи наименование нагрузки.");return}
-if(qn<=0||gamma<=0){alert("Нормативная нагрузка и коэффициент должны быть больше нуля.");return}
-let item={name,category:$("loadCategory").value,material:selectedPreset().name,qn,gamma,qd:qn*gamma,note:$("loadNote").value.trim(),source:$("loadSource").value.trim()};
-if(editIndex>=0)loads[editIndex]=item;else loads.push(item);
-renderLoads();resetEntry();
-$("status").textContent="Нагрузка сохранена.";
+function renderLineLoads() {
+  const tbody=document.getElementById("lineTable");
+  if (!lineLoads.length) {
+    tbody.innerHTML='<tr><td colspan="10" class="empty">Погонные нагрузки пока не добавлены</td></tr>';
+  } else {
+    tbody.innerHTML=lineLoads.map((x,i)=>`
+      <tr>
+        <td>${i+1}</td>
+        <td class="left">${escapeHTML(x.name)}<br><small>${escapeHTML(x.location||x.note||"")}</small></td>
+        <td>${escapeHTML(x.category)}</td>
+        <td>${fmt(x.qn)}</td>
+        <td>${fmt(x.gamma)}</td>
+        <td>${fmt(x.qd)}</td>
+        <td>${fmt(x.length)}</td>
+        <td>${fmt(x.count)}</td>
+        <td>${fmt(x.qd*x.length*x.count)}</td>
+        <td class="no-print">
+          <button class="secondary small-btn" onclick="editLineLoad(${i})">Изменить</button>
+          <button class="danger small-btn" onclick="deleteLineLoad(${i})">Удалить</button>
+        </td>
+      </tr>`).join("");
+  }
+
+  let permanent=0,variable=0,force=0;
+  lineLoads.forEach(x=>{
+    if(x.category==="Постоянная") permanent+=x.qd;
+    else variable+=x.qd;
+    force+=x.qd*x.length*x.count;
+  });
+  document.getElementById("linePermanent").textContent=fmt(permanent);
+  document.getElementById("lineVariable").textContent=fmt(variable);
+  document.getElementById("lineTotal").textContent=fmt(permanent+variable);
+  document.getElementById("lineForce").textContent=fmt(force);
 }
 
-function renderLoads(){
-let body=$("loadsBody");body.innerHTML="";
-if(!loads.length){body.innerHTML='<tr><td colspan="9">Нагрузки пока не добавлены</td></tr>'}
-loads.forEach((x,i)=>{
-let tr=document.createElement("tr");
-[i+1,x.name,x.material,x.category,fmt(x.qn),fmt(x.gamma),fmt(x.qd),x.note].forEach((v,j)=>{
-let td=document.createElement("td");td.textContent=v;if([1,2,7].includes(j))td.className="left";tr.appendChild(td);
-});
-let td=document.createElement("td");td.className="no-print";
-let wrap=document.createElement("div");wrap.className="row-buttons";
-let e=document.createElement("button");e.className="secondary";e.textContent="Изменить";e.onclick=()=>editLoad(i);
-let d=document.createElement("button");d.className="danger";d.textContent="Удалить";d.onclick=()=>{if(confirm("Удалить нагрузку?")){loads.splice(i,1);renderLoads()}};
-wrap.append(e,d);td.appendChild(wrap);tr.appendChild(td);body.appendChild(tr);
-});
-let permanent=loads.filter(x=>x.category==="Постоянная").reduce((s,x)=>s+x.qd,0);
-let variable=loads.filter(x=>x.category==="Временная").reduce((s,x)=>s+x.qd,0);
-let total=permanent+variable;
-$("sumPermanent").textContent=fmt(permanent);
-$("sumVariable").textContent=fmt(variable);
-$("sumTotal").textContent=fmt(total);
-$("sumForce").textContent=fmt(total*num("area"));
+function editLineLoad(i) {
+  const x=lineLoads[i];
+  const name=prompt("Наименование:",x.name);
+  if(name===null)return;
+  const qn=parseFloat(prompt("Нормативная нагрузка qn, кН/м:",x.qn));
+  const gamma=parseFloat(prompt("Коэффициент γf:",x.gamma));
+  const length=parseFloat(prompt("Длина, м:",x.length));
+  const count=parseFloat(prompt("Количество:",x.count));
+  if(![qn,gamma,length,count].every(Number.isFinite)||qn<0||gamma<=0||length<0||count<=0) {
+    alert("Проверьте введённые значения.");return;
+  }
+  x.name=name.trim()||x.name;
+  x.qn=qn;x.gamma=gamma;x.qd=qn*gamma;x.length=length;x.count=count;
+  renderLineLoads();
+}
+function deleteLineLoad(i) {
+  if(confirm("Удалить эту погонную нагрузку?")) {
+    lineLoads.splice(i,1);
+    renderLineLoads();
+  }
 }
 
-function editLoad(i){
-let x=loads[i];editIndex=i;
-$("loadName").value=x.name;$("loadCategory").value=x.category;
-$("material").value="manual";$("manualQ").value=x.qn;$("gamma").value=x.gamma;
-$("loadNote").value=x.note;$("loadSource").value=x.source;
-$("saveLoadBtn").textContent="Сохранить изменения";
-$("cancelEditBtn").style.display="inline-block";
-$("materialQuantity").disabled=true;$("density").disabled=true;
-$("materialResult").textContent="Режим редактирования нагрузки.";
-window.scrollTo({top:0,behavior:"smooth"});
+function saveProject() {
+  const ids=["projectName","projectAddress","projectCode","projectStage","projectSection","sheetNumber","author","checker","projectDate"];
+  const data={};
+  ids.forEach(id=>data[id]=document.getElementById(id).value);
+  localStorage.setItem("engineeringProject16",JSON.stringify(data));
+  alert("Данные проекта сохранены в браузере.");
+}
+function loadProject() {
+  const raw=localStorage.getItem("engineeringProject16");
+  if(!raw)return alert("Сохранённых данных проекта нет.");
+  const data=JSON.parse(raw);
+  Object.keys(data).forEach(id=>{
+    const el=document.getElementById(id);
+    if(el)el.value=data[id];
+  });
+  alert("Данные проекта загружены.");
 }
 
-function projectData(){
-let ids=["objectName","objectAddress","projectCode","projectStage","projectSection","sheetNumber","author","checkBy","calcDate","area","location","floor"];
-let o={};ids.forEach(id=>o[id]=$(id).value);return o;
-}
-function restoreProject(){
-try{let d=JSON.parse(localStorage.getItem("loadsProjectData")||"{}");Object.keys(d).forEach(id=>{if($(id))$(id).value=d[id]})}catch(e){}
-}
-function saveProject(){
-try{localStorage.setItem("loadsProjectData",JSON.stringify(projectData()))}catch(e){}
-}
-
-function exportExcel(){
-if(!loads.length){alert("Сначала добавь нагрузки.");return}
-if(typeof XLSX==="undefined"){alert("Не удалось загрузить модуль Excel. Проверь интернет.");return}
-let p=projectData();
-let rows=[
-["ВЕДОМОСТЬ НАГРУЗОК"],["Объект",p.objectName],["Адрес",p.objectAddress],
-["Шифр",p.projectCode],["Стадия",p.projectStage],["Раздел",p.projectSection],
-["Лист",p.sheetNumber],["Площадь, м²",p.area],["Дата",p.calcDate],[],
-["№","Наименование","Материал","Категория","qn, кН/м²","γf","qd, кН/м²","Примечание","Источник"]
-];
-loads.forEach((x,i)=>rows.push([i+1,x.name,x.material,x.category,x.qn,x.gamma,x.qd,x.note,x.source]));
-let per=loads.filter(x=>x.category==="Постоянная").reduce((s,x)=>s+x.qd,0);
-let vari=loads.filter(x=>x.category==="Временная").reduce((s,x)=>s+x.qd,0);
-rows.push([],["Постоянные, кН/м²",per],["Временные, кН/м²",vari],["Всего, кН/м²",per+vari],["Сила на площадь, кН",(per+vari)*num("area")],[]);
-rows.push(["РАСЧЁТ МНОГОСЛОЙНОЙ СТЕНЫ"],["№","Материал слоя","Толщина, мм","Плотность, кг/м³","γf","qn, кН/м²","qd, кН/м²"]);
-layers.forEach((x,i)=>rows.push([i+1,x.material,x.thickness,x.density,x.gamma,layerWeight(x),layerWeight(x)*x.gamma]));
-let t=wallTotals();rows.push(["Итого по стене", "",t.thickness,"", "",t.qn,t.qd]);
-rows.push([],["Примечание","Арифметическое суммирование. Нормативные сочетания и коэффициенты проверяются отдельно."]);
-let ws=XLSX.utils.aoa_to_sheet(rows);
-ws["!cols"]=[{wch:9},{wch:34},{wch:28},{wch:18},{wch:15},{wch:10},{wch:15},{wch:30},{wch:25}];
-ws["!merges"]=[{s:{r:0,c:0},e:{r:0,c:8}}];
-let wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,"Ведомость");
-XLSX.writeFile(wb,"vedomost_nagruzok.xlsx");
-}
-
-function printReport(){
-if(!loads.length){alert("Сначала добавь нагрузки.");return}
-let p=projectData();
-let per=loads.filter(x=>x.category==="Постоянная").reduce((s,x)=>s+x.qd,0);
-let vari=loads.filter(x=>x.category==="Временная").reduce((s,x)=>s+x.qd,0);
-let t=wallTotals();
-let loadRows=loads.map((x,i)=>`<tr><td>${i+1}</td><td>${esc(x.name)}</td><td>${esc(x.material)}</td><td>${esc(x.category)}</td><td>${fmt(x.qn)}</td><td>${fmt(x.gamma)}</td><td>${fmt(x.qd)}</td><td>${esc(x.note)}</td></tr>`).join("");
-let layerRows=layers.map((x,i)=>`<tr><td>${i+1}</td><td>${esc(x.material)}</td><td>${x.thickness}</td><td>${x.density}</td><td>${fmt(x.gamma)}</td><td>${fmt(layerWeight(x))}</td><td>${fmt(layerWeight(x)*x.gamma)}</td></tr>`).join("");
-$("printDocument").innerHTML=`
-<h2 style="text-align:center">ВЕДОМОСТЬ НАГРУЗОК</h2>
-<p><b>Объект:</b> ${esc(p.objectName)} &nbsp; <b>Шифр:</b> ${esc(p.projectCode)}</p>
-<p><b>Адрес:</b> ${esc(p.objectAddress)} &nbsp; <b>Стадия:</b> ${esc(p.projectStage)} &nbsp; <b>Раздел:</b> ${esc(p.projectSection)}</p>
-<p><b>Лист:</b> ${esc(p.sheetNumber)} &nbsp; <b>Площадь:</b> ${esc(p.area)} м² &nbsp; <b>Дата:</b> ${esc(p.calcDate)}</p>
-<h3>Общая ведомость</h3>
-<table><tr><th>№</th><th>Наименование</th><th>Материал</th><th>Категория</th><th>qn</th><th>γf</th><th>qd</th><th>Примечание</th></tr>${loadRows}</table>
-<h3>Итоговые значения, кН/м²</h3>
-<p>Постоянные: ${fmt(per)} &nbsp; Временные: ${fmt(vari)} &nbsp; Общая: <b>${fmt(per+vari)}</b></p>
-<p>Полная сила на расчётную площадь: <b>${fmt((per+vari)*num("area"))} кН</b></p>
-<h3>Расчёт многослойной стены</h3>
-<table><tr><th>№</th><th>Материал</th><th>Толщина, мм</th><th>Плотность, кг/м³</th><th>γf</th><th>qn</th><th>qd</th></tr>${layerRows}
-<tr><th colspan="2">Итого</th><th>${fmt(t.thickness)}</th><th></th><th></th><th>${fmt(t.qn)}</th><th>${fmt(t.qd)}</th></tr></table>
-<p><b>Примечание:</b> воздушная прослойка учитывается в общей толщине стены, но не добавляет собственного веса. Нормативные сочетания нагрузок и коэффициенты проверяются отдельно.</p>
-<p style="margin-top:35px">Составил: ${esc(p.author)} __________________ &nbsp;&nbsp;&nbsp; Проверил: ${esc(p.checkBy)} __________________</p>
-<style>#printDocument table{width:100%;border-collapse:collapse;font-size:10px}#printDocument th,#printDocument td{border:1px solid #555;padding:5px;text-align:center}#printDocument h3{margin-top:20px}</style>`;
-window.print();
+function exportExcel() {
+  if(typeof XLSX==="undefined")return alert("Не удалось загрузить библиотеку Excel. Проверьте подключение к интернету.");
+  const wb=XLSX.utils.book_new();
+  const project=[
+    ["ИНЖЕНЕРНЫЙ КАЛЬКУЛЯТОР НАГРУЗОК — ВЕРСИЯ 1.6"],
+    ["Объект",document.getElementById("projectName").value],
+    ["Адрес",document.getElementById("projectAddress").value],
+    ["Шифр",document.getElementById("projectCode").value],
+    ["Стадия",document.getElementById("projectStage").value],
+    ["Раздел",document.getElementById("projectSection").value],
+    ["Лист",document.getElementById("sheetNumber").value],
+    ["Разработал",document.getElementById("author").value],
+    ["Проверил",document.getElementById("checker").value],
+    ["Дата",document.getElementById("projectDate").value]
+  ];
+  const areaData=[
+    project,
+    [],
+    ["№","Наименование","Категория","Материал","qn, кН/м²","γf","qd, кН/м²","Площадь, м²","Сила, кН","Расположение","Этаж","Примечание"],
+    ...areaLoads.map((x,i)=>[i+1,x.name,x.category,x.material,x.qn,x.gamma,x.qd,x.area,x.qd*x.area,x.location,x.floor,x.note])
+  ];
+  const lineData=[
+    project,
+    [],
+    ["№","Наименование","Категория","qn, кН/м","γf","qd, кН/м","Длина, м","Количество","Сила, кН","Расположение","Примечание"],
+    ...lineLoads.map((x,i)=>[i+1,x.name,x.category,x.qn,x.gamma,x.qd,x.length,x.count,x.qd*x.length*x.count,x.location,x.note])
+  ];
+  const layerData=[
+    project,
+    [],
+    ["№","Слой","Толщина, мм","Плотность, кг/м³","γf","qn слоя, кН/м²","qd слоя, кН/м²"],
+    ...layers.map((x,i)=>{
+      const qn=x.density*x.thickness/1000*G/1000;
+      return [i+1,x.name,x.thickness,x.density,x.gamma,qn,qn*x.gamma];
+    }),
+    [],
+    ["Общая толщина, мм",wallResult.thickness],
+    ["Нормативная нагрузка стены, кН/м²",wallResult.qn],
+    ["Расчётная нагрузка стены, кН/м²",wallResult.qd],
+    ["Высота стены, м",num("wallHeight")],
+    ["Длина стены, м",num("wallLength")],
+    ["Количество стен",num("wallCount")],
+    ["Нормативная погонная нагрузка, кН/м",wallResult.lineQn],
+    ["Расчётная погонная нагрузка, кН/м",wallResult.lineQd],
+    ["Нормативная сила, кН",wallResult.forceN],
+    ["Расчётная сила, кН",wallResult.force]
+  ];
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(areaData),"Нагрузки на площадь");
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(lineData),"Погонные нагрузки");
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(layerData),"Слои стены");
+  XLSX.writeFile(wb,"Инженерный_калькулятор_нагрузок_1_6.xlsx");
 }
 
-$("layerMaterial").addEventListener("change",updateLayerMaterial);
-$("addLayerBtn").addEventListener("click",addLayer);
-$("resetWallBtn").addEventListener("click",()=>{
-if(confirm("Вернуть исходный состав стены?")){$("addLayerBtn").textContent="Добавить слой";delete $("addLayerBtn").dataset.edit;defaultWall()}
-});
-$("addWallToLoads").addEventListener("click",addWall);
-$("material").addEventListener("change",updateMaterial);
-$("materialQuantity").addEventListener("input",calculateMaterial);
-$("density").addEventListener("input",calculateMaterial);
-$("gamma").addEventListener("input",calculateMaterial);
-$("manualQ").addEventListener("input",()=>{
-let q=num("manualQ");
-$("materialResult").textContent=q>0?"qn = "+fmt(q)+" кН/м²; qd = "+fmt(q*num("gamma"))+" кН/м².":"";
-});
-$("saveLoadBtn").addEventListener("click",addOrUpdateLoad);
-$("cancelEditBtn").addEventListener("click",resetEntry);
-$("excelBtn").addEventListener("click",exportExcel);
-$("printBtn").addEventListener("click",printReport);
-$("clearBtn").addEventListener("click",()=>{
-if(confirm("Удалить все нагрузки?")){loads=[];renderLoads();resetEntry()}
-});
-$("area").addEventListener("input",renderLoads);
-document.querySelectorAll("#app input,#app select").forEach(el=>el.addEventListener("change",saveProject));
+function clearAll() {
+  if(!confirm("Удалить все нагрузки и слои стены из текущего расчёта?"))return;
+  areaLoads=[];
+  lineLoads=[];
+  layers=[];
+  renderAreaLoads();
+  renderLineLoads();
+  renderLayers();
+  calculateWall();
+}
 
-restoreProject();
-if(!$("calcDate").value)$("calcDate").value=new Date().toISOString().slice(0,10);
-defaultWall();
-updateMaterial();
-renderLoads();
+function init() {
+  document.getElementById("projectDate").value=new Date().toISOString().slice(0,10);
+  layers=[
+    {name:"Кладка из силикатного кирпича",thickness:380,density:1800,gamma:1.1},
+    {name:"Минераловатный утеплитель",thickness:100,density:100,gamma:1.1},
+    {name:"Воздушная прослойка",thickness:40,density:0,gamma:1.1},
+    {name:"Облицовка из керамического кирпича",thickness:120,density:1400,gamma:1.1}
+  ];
+  renderLayers();
+  renderAreaLoads();
+  renderLineLoads();
+  calculateWall();
+  loadProjectSilently();
+}
+function loadProjectSilently() {
+  const raw=localStorage.getItem("engineeringProject16");
+  if(!raw)return;
+  try {
+    const data=JSON.parse(raw);
+    Object.keys(data).forEach(id=>{
+      const el=document.getElementById(id);
+      if(el)el.value=data[id];
+    });
+  } catch(e) {}
+}
+init();
 </script>
 </body>
 </html>

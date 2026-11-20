@@ -254,9 +254,11 @@ th {
 
 <section class="panel">
   <h2>3. Список нагрузок</h2>
-<button class="primary" id="exportButton" type="button">
-  Скачать ведомость Excel
-</button>
+
+  <button class="primary" id="exportButton" type="button">
+    Скачать ведомость для Excel
+  </button>
+
   <div class="table-wrap">
     <table>
       <thead>
@@ -534,17 +536,27 @@ $("loadTable").addEventListener("click", event => {
 $("area").addEventListener("input", render);
 
 render();
-  
+
 $("exportButton").addEventListener("click", () => {
   if (loads.length === 0) {
     showStatus("Сначала добавьте хотя бы одну нагрузку.");
     return;
   }
 
+  // Формат чисел для русской версии Excel:
+  // десятичная точка заменяется запятой.
+  const excelNumber = value =>
+    Number(value).toFixed(2).replace(".", ",");
+
   const rows = [
     ["Ведомость сбора нагрузок"],
     ["Объект", $("objectName").value],
-    ["Площадь, м2", $("area").value],
+    [
+      "Площадь, м2",
+      $("area").value !== ""
+        ? excelNumber(Number($("area").value))
+        : ""
+    ],
     [],
     [
       "Наименование",
@@ -559,9 +571,9 @@ $("exportButton").addEventListener("click", () => {
     rows.push([
       item.name,
       item.type === "permanent" ? "Постоянная" : "Временная",
-      number(item.value),
-      number(item.gamma),
-      number(item.value * item.gamma)
+      excelNumber(item.value),
+      excelNumber(item.gamma),
+      excelNumber(item.value * item.gamma)
     ]);
   });
 
@@ -579,10 +591,13 @@ $("exportButton").addEventListener("click", () => {
   rows.push(
     [],
     ["ИТОГИ"],
-    ["Постоянные нагрузки, кН/м2", number(permanent)],
-    ["Временные нагрузки, кН/м2", number(variable)],
-    ["Общая нагрузка, кН/м2", number(total)],
-    ["Полная сила, кН", area > 0 ? number(total * area) : "Не задана"]
+    ["Постоянные нагрузки, кН/м2", excelNumber(permanent)],
+    ["Временные нагрузки, кН/м2", excelNumber(variable)],
+    ["Общая нагрузка, кН/м2", excelNumber(total)],
+    [
+      "Полная сила, кН",
+      area > 0 ? excelNumber(total * area) : "Не задана"
+    ]
   );
 
   const csv = "\uFEFF" + rows.map(row =>
@@ -605,7 +620,7 @@ $("exportButton").addEventListener("click", () => {
   link.click();
   link.remove();
 
-  URL.revokeObjectURL(url);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
 
   showStatus("Ведомость успешно сформирована.");
 });

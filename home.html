@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Engineering Calculator Professional</title>
+
+<style>
+* { box-sizing: border-box; }
+
+:root {
+  --navy: #142b45;
+  --blue: #2878b8;
+  --background: #f3f6fa;
+  --text: #24364b;
+  --muted: #8290a2;
+  --border: #e6ebf1;
+}
+
+body {
+  margin: 0;
+  font-family: "Segoe UI", Arial, sans-serif;
+  background: var(--background);
+  color: var(--text);
+}
+
+.topbar {
+  height: 76px;
+  background: white;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 38px;
+  border-bottom: 1px solid var(--border);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+}
+
+.logo {
+  width: 43px;
+  height: 43px;
+  border-radius: 12px;
+  background: var(--navy);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 23px;
+  font-weight: bold;
+}
+
+.brand-name {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--navy);
+}
+
+.brand-subtitle {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 3px;
+  letter-spacing: 1px;
+}
+
+.status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #39845d;
+  font-size: 12px;
+  font-weight: 600;
+  background: #edf8f1;
+  padding: 9px 13px;
+  border-radius: 20px;
+}
+
+.status-dot {
+  width: 7px;
+  height: 7px;
+  background: #35a56b;
+  border-radius: 50%;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 42px 38px;
+}
+
+.welcome {
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  margin-bottom: 30px;
+}
+
+.welcome h1 {
+  font-size: 29px;
+  color: var(--navy);
+  margin: 0 0 9px;
+}
+
+.welcome p {
+  color: var(--muted);
+  margin: 0;
+  font-size: 14px;
+}
+
+.version {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 22px;
+  gap: 15px;
+}
+
+.section-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--navy);
+}
+
+.search {
+  width: 260px;
+  padding: 11px 14px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: white;
+  font-size: 13px;
+  outline: none;
+}
+
+.search:focus {
+  border-color: var(--blue);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.card {
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 13px;
+  padding: 23px;
+  min-height: 205px;
+  display: flex;
+  flex-direction: column;
+  transition: .2s ease;
+  box-shadow: 0 3px 12px rgba(20,43,69,.035);
+}
+
+.card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 25px rgba(20,43,69,.09);
+  border-color: #c7d9eb;
+}
+
+.card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.card-icon {
+  width: 48px;
+  height: 48px;
+  background: #edf4fb;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 25px;
+}
+
+.card-number {
+  color: #b0bdca;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.card h3 {
+  color: var(--navy);
+  font-size: 17px;
+  margin: 17px 0 7px;
+}
+
+.card p {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.6;
+  margin: 0 0 18px;
+  flex: 1;
+}
+
+.open-button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  background: #f2f6fa;
+  border: none;
+  color: var(--blue);
+  padding: 11px 13px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: .2s;
+}
+
+.open-button:hover {
+  background: var(--blue);
+  color: white;
+}
+
+.open-button span:last-child {
+  font-size: 17px;
+}
+
+.footer {
+  margin-top: 35px;
+  border-top: 1px solid var(--border);
+  padding-top: 18px;
+  display: flex;
+  justify-content: space-between;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.no-results {
+  display: none;
+  padding: 35px;
+  text-align: center;
+  color: var(--muted);
+  background: white;
+  border-radius: 12px;
+  margin-top: 15px;
+}
+
+@media(max-width: 900px) {
+  .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media(max-width: 600px) {
+  .topbar { padding: 0 17px; }
+  .container { padding: 28px 17px; }
+  .grid { grid-template-columns: 1fr; }
+
+  .welcome {
+    align-items: start;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .toolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .search { width: 100%; }
+
+  .footer {
+    flex-direction: column;
+    gap: 8px;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <div class="logo">E</div>
+    <div>
+      <div class="brand-name">ENGINEERING CALCULATOR</div>
+      <div class="brand-subtitle">PROFESSIONAL EDITION</div>
+    </div>
+  </div>
+
+  <div class="status">
+    <span class="status-dot"></span>
+    АВТОНОМНЫЙ РЕЖИМ
+  </div>
+</header>
+
+<main class="container">
+
+  <section class="welcome">
+    <div>
+      <h1>Рабочее пространство</h1>
+      <p>Инженерные расчёты и проектные инструменты в одном приложении</p>
+    </div>
+    <div class="version">Версия программы 1.0.0</div>
+  </section>
+
+  <section class="toolbar">
+    <div class="section-title">Мои инструменты</div>
+
+    <input
+      class="search"
+      id="search"
+      type="text"
+      placeholder="Поиск калькулятора..."
+      oninput="filterCards()"
+    >
+  </section>
+
+  <section class="grid" id="calculatorGrid">
+
+    <article class="card" data-search="нагрузки сбор нагрузок">
+      <div class="card-top">
+        <div class="card-icon">⚖️</div>
+        <div class="card-number">01 / LOADS</div>
+      </div>
+      <h3>Нагрузки</h3>
+      <p>Сбор постоянных и временных нагрузок, расчёт нормативных и расчётных значений.</p>
+      <button class="open-button" onclick="openCalculator('loads.html')">
+        Открыть калькулятор <span>→</span>
+      </button>
+    </article>
+
+    <article class="card" data-search="арматура ведомость расход">
+      <div class="card-top">
+        <div class="card-icon">🔩</div>
+        <div class="card-number">02 / REBAR</div>
+      </div>
+      <h3>Арматура</h3>
+      <p>Расчёт количества стержней, длины, массы и ведомости расхода арматуры.</p>
+      <button class="open-button" onclick="openCalculator('rebar.html')">
+        Открыть калькулятор <span>→</span>
+      </button>
+    </article>
+
+    <article class="card" data-search="бетон опалубка объём">
+      <div class="card-top">
+        <div class="card-icon">🏗️</div>
+        <div class="card-number">03 / CONCRETE</div>
+      </div>
+      <h3>Бетон и опалубка</h3>
+      <p>Расчёт объёмов бетона, расхода материалов и площади опалубки.</p>
+      <button class="open-button" onclick="openCalculator('concrete.html')">
+        Открыть калькулятор <span>→</span>
+      </button>
+    </article>
+
+    <article class="card" data-search="кирпич кладка стены">
+      <div class="card-top">
+        <div class="card-icon">🧱</div>
+        <div class="card-number">04 / MASONRY</div>
+      </div>
+      <h3>Кирпичная кладка</h3>
+      <p>Расчёт многослойных стен, количества кирпича, раствора и нагрузки от кладки.</p>
+      <button class="open-button" onclick="openCalculator('masonry.html')">
+        Открыть калькулятор <span>→</span>
+      </button>
+    </article>
+
+    <article class="card" data-search="фундамент основание грунт">
+      <div class="card-top">
+        <div class="card-icon">🏛️</div>
+        <div class="card-number">05 / FOUNDATION</div>
+      </div>
+      <h3>Фундаменты</h3>
+      <p>Предварительный расчёт фундаментов, давления на грунт и подбор ширины ленты.</p>
+      <button class="open-button" onclick="openCalculator('foundation.html')">
+        Открыть калькулятор <span>→</span>
+      </button>
+    </article>
+
+    <article class="card" data-search="архитектура помещения площади окна двери строительный объём спецификации тэп">
+      <div class="card-top">
+        <div class="card-icon">🏢</div>
+        <div class="card-number">06 / ARCHITECTURE</div>
+      </div>
+      <h3>Архитектура</h3>
+      <p>Площади помещений, строительный объём здания, ведомости окон и дверей, спецификации и ТЭП.</p>
+      <button class="open-button" onclick="openCalculator('architecture.html')">
+        Открыть калькулятор <span>→</span>
+      </button>
+    </article>
+
+    <article class="card" data-search="генеральный план генплан гп участок застройка озеленение проезды тротуары тэп">
+      <div class="card-top">
+        <div class="card-icon">🗺️</div>
+        <div class="card-number">07 / SITE PLAN</div>
+      </div>
+      <h3>Генеральный план</h3>
+      <p>Расчёт баланса территории, площадей покрытий, озеленения и технико-экономических показателей.</p>
+      <button class="open-button" onclick="openCalculator('genplan.html')">
+        Открыть калькулятор <span>→</span>
+      </button>
+    </article>
+
+    <article class="card" data-search="опз пояснительная записка общая часть проектные решения исходные данные">
+      <div class="card-top">
+        <div class="card-icon">📑</div>
+        <div class="card-number">08 / EXPLANATORY NOTE</div>
+      </div>
+      <h3>ОПЗ — Пояснительная записка</h3>
+      <p>Подготовка общей пояснительной записки по объекту проектирования с формированием документа Word.</p>
+      <button class="open-button" onclick="openCalculator('opz.html')">
+        Открыть раздел <span>→</span>
+      </button>
+    </article>
+
+  </section>
+
+  <div class="no-results" id="noResults">
+    Калькуляторы по вашему запросу не найдены.
+  </div>
+
+  <footer class="footer">
+    <span>Engineering Calculator Professional</span>
+    <span>Инженерные инструменты для проектирования</span>
+  </footer>
+
+</main>
+
+<script>
+function openCalculator(file) {
+  window.location.href = file;
+}
+
+function filterCards() {
+  const query = document.getElementById('search')
+    .value.toLowerCase().trim();
+
+  const cards = document.querySelectorAll('.card');
+  let visible = 0;
+
+  cards.forEach(card => {
+    const text = card.innerText.toLowerCase();
+    const keywords = card.dataset.search.toLowerCase();
+
+    const match = text.includes(query) || keywords.includes(query);
+
+    card.style.display = match ? 'flex' : 'none';
+
+    if (match) visible++;
+  });
+
+  document.getElementById('noResults').style.display =
+    visible === 0 ? 'block' : 'none';
+}
+</script>
+
+</body>
+</html>
